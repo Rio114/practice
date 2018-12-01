@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta http-equiv="conten-type"
+        content="text/html; charset=UTF-8">
+        <title> <%=title %></title>
+        <style>
+        h1 {font-size: 60pt; color:#eee;
+        text-align:right; margin:0px; }
+        body {font-size: 14pt; color:#999;
+        margin:5px}
+        </style>
+        <link type='text/css' href='./style.css' rel='stylesheet'>
+    </head>
+    <body>
+        <head>
+            <h1><%=title %></h1>
+        </head>
+        <div role='main'>
+            <p><%=content %></p>
+            <form method='post' action='/other'>
+                <p>
+                    <input type='text' name='msg'>
+                    <input type='submit' value='Click'>
+                </p>
+            </form>
+            <p><a href='/other'>Move to other page &gt;&gt;</a></p>
+        </div>
+    </body>
+</html>
