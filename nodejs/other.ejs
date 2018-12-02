@@ -1,18 +1,27 @@
 <!DOCTYPE html>
 <html lang="ja">
     <head>
-        <meta http-equiv="content-type"
-        conten = "text/html"; charset="UTF-8">
-        <title><%=title %></title>
-        <link type="text/css" herf='./style.css' rel="stylesheet">
+        <meta http-equiv="conten-type"
+        content="text/html; charset=UTF-8">
+        <title> <%=title %></title>
+        <style>
+        h1 {font-size: 60pt; color:#eee;
+        text-align:right; margin:0px; }
+        body {font-size: 14pt; color:#999;
+        margin:5px}
+        </style>
+        <link type='text/css' href='./style.css' rel='stylesheet'>
     </head>
     <body>
-            <head>
-                <h1><%=title %></h1>
-            </head>
-            <div role='main'>
-                <p><%=content %></p>
-            </div>
+        <head>
+            <h1><%=title %></h1>
+        </head>
+        <div role='main'>
+            <p><table>
+                <% for(var key in data) { %>
+                    <%- include('data_item', {key:key, val:data[key]}) %>
+                <% } %>
+            </table></p>
+        </div>
     </body>
 </html>
-
