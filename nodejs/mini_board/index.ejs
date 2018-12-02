@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta http-equiv="conten-type"
+        content="text/html; charset=UTF-8">
+        <title>my board</title>
+        <link type='text/css' href='./style.css' rel='stylesheet'>
+        <script>
+        function init(){
+            var id = localStrage.getItem('id');
+            if (id == null){
+                location.href = './login';
+            }
+            document.querySelector('#id').textContent = 'ID:' + id;
+            document.querySelector('#id_input').value = id;
+        }
+        </script>
+    </head>
+
+    <body onload='init();'>
+        <head>
+            <h1>my board</h1>
+        </head>
+        <div role='main'>
+            <p>10 messagse can be saved.</p>
+            <form method='POST' action='/'>
+                <p><span id='id'></span>
+                <input type='hidedn' id='id_input' name='id' value=''></p>
+                <p><input type='text' name='msg'>
+                <input type='submit' value='send'></p>
+            </form>
+            <hr>
+            <p><table style='width:85%;'>
+                <%for (var i in data) { %>
+                    <%- include('data_item', {val:data[i]}) %>
+                <% } %>
+            </table></p>
+        </div>
+    </body>
+</html>
