@@ -26,12 +26,13 @@ class DefaultBox(Layer):
         
         super(DefaultBox, self).__init__(**kwargs)
 
-    def get_output_shape_for(self, input_shape):
+    def compute_output_shape(self, x):
+        #input_shape = K.int_shape(x)
         num_priors_ = len(self.aspect_ratios)
-        layer_width = input_shape[1]
-        layer_height = input_shape[2]
+        layer_width = x[1]
+        layer_height = x[2]
         num_boxes = num_priors_ * layer_width * layer_height
-        return (input_shape[0], num_boxes, 8)
+        return (x[0], num_boxes, 8)
 
     def call(self, x, mask=None):
         input_shape = K.int_shape(x)
