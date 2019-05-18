@@ -12,7 +12,7 @@ from keras.layers import concatenate
 from ssd_layer import DefaultBox
 
 class SSD():
-    def __init__(self, img_size=(300,300,3), num_classes=2):
+    def __init__(self, num_classes, img_size=(300,300,3), ):
         self.img_size = img_size
         self.num_classes = num_classes
         self.dim_box = 4 #(cx, cy, w, h)
