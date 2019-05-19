@@ -27,7 +27,6 @@ class DefaultBox(Layer):
         super(DefaultBox, self).__init__(**kwargs)
 
     def compute_output_shape(self, x):
-        #input_shape = K.int_shape(x)
         num_priors_ = len(self.aspect_ratios)
         layer_width = x[1]
         layer_height = x[2]
@@ -92,5 +91,5 @@ class DefaultBox(Layer):
 
         pattern = [K.shape(x)[0], 1, 1]
         default_boxes_tensor = K.tile(default_boxes_tensor, pattern)
-        
+
         return default_boxes_tensor

@@ -136,7 +136,7 @@ class BBoxUtility(object):
                                                          np.arange(assign_num),
                                                          :4]
         assignment[:, 4][best_iou_mask] = 0
-        assignment[:, 5:-8][best_iou_mask] = boxes[best_iou_idx, 4:]
+        assignment[:, 4:-8][best_iou_mask] = boxes[best_iou_idx, 4:]
         assignment[:, -8][best_iou_mask] = 1
         return assignment
 

@@ -12,13 +12,13 @@ from keras.layers import Dropout
 
 from ssd_layer import DefaultBox
 
-class SSD():
+class SSD_VGG16():
     def __init__(self, num_classes, img_size=(300,300,3)):
         self.img_size = img_size
         self.num_classes = num_classes
         self.dim_box = 4 #(cx, cy, w, h)
 
-    def base_CNN(self, train_class=2):
+    def vgg16(self, train_class=2):
         """
         """
 
@@ -53,37 +53,18 @@ class SSD():
         self.conv5_3 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv5_3')(self.conv5_2)
         self.pool5 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool5')(self.conv5_3)
 
-        ## FC6
-        self.fc6 = Conv2D(1024, (3, 3), dilation_rate=(6, 6),activation='relu', padding='same',name='fc6')(self.pool2)
-
-        ## FC7
-        self.fc7 = Conv2D(1024, (1, 1), activation='relu',padding='same',name='fc7')(self.fc6)
-
-        ## Block 6
-        self.conv6_1 = Conv2D(256, (1, 1),activation='relu',padding='same',name='conv6_1')(self.fc7)
-        self.conv6_2 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv6_2')(self.conv6_1)
-
-        ## Block 7
-        self.conv7_1 = Conv2D(128, (1, 1),activation='relu',padding='same',name='conv7_1')(self.conv6_2)
-        self.conv7_2 = Conv2D(256, (3, 3),strides=(2,2),activation='relu',padding='valid',name='conv7_2')(self.conv7_1)
-
-        ## Block 8
-        self.conv8_1 = Conv2D(128, (1, 1),activation='relu',padding='same',name='conv8_1')(self.conv7_2)
-        self.conv8_2 = Conv2D(256, (3, 3),strides=(2,2),activation='relu',padding='same',name='conv8_2')(self.conv8_1)
-
-        # Last Pool
-        self.pool6 = GlobalAveragePooling2D(name='pool6')(self.conv8_2)
-
-        self.flat = Flatten(name='flatten')(self.conv8_2)
-        self.dense1 = Dense(self.num_classes, name='dense1')(self.flat)
-        self.drop = Dropout(0.5, name='drop')(self.dense1)
-        self.dense2 = Dense(train_class, name='dense2')(self.drop)
-        self.pred_CNN = Activation('softmax',name='pred_CNN')(self.dense2)
-        return  Model(self.inputs, self.pred_CNN)
+        self.flat = Flatten(name='flatten')(self.pool5)
+        self.dense1 = Dense(4096, name='dense1')(self.flat)
+        self.dense2 = Dense(4096, name='dense2')(self.dense1)
+        self.dense3 = Dense(1000, name='dense3')(self.dense2)
+        self.pred_vgg16 = Activation('softmax',name='pred_CNN')(self.dense3)
+        return  Model(self.inputs, self.pred_vgg16)
 
     def SSD(self):
         # detectors from layers
-        self.detector_layers = [self.conv4_3, self.conv6_2, self.conv7_2]
+        # self.detector_layers = [self.conv3_3, self.conv4_3, self.conv5_3]
+
+        self.detector_layers = [self.conv5_3, self.conv5_2]
         self.pred_SSD = self.detectors()
         return  Model(self.inputs, self.pred_SSD)
 
@@ -110,18 +91,20 @@ class SSD():
                                     name='{}_mbox_loc'.format(name_layer))(layer)
             layer_length = layer_mbox_loc.shape[1].value
             layer_mbox_loc_flat = Flatten(name='{}_mbox_loc_flat'.format(name_layer))(layer_mbox_loc)
+            # layer_mbox_loc_denc = Dense(self.dim_box, name='{}_mbox_loc_dense'.format(name_layer))(layer_mbox_loc_flat)
             mbox_loc_list.append(layer_mbox_loc_flat)
             
             layer_mbox_conf = Conv2D(num_def * self.num_classes,(3,3),padding='same',
                                     name='{}_mbox_conf'.format(name_layer))(layer)
             layer_mbox_conf_flat = Flatten(name='{}_mbox_conf_flat'.format(name_layer))(layer_mbox_conf)
+            # layer_mbox_conf_denc = Dense(self.num_classes, name='{}_mbox_conf_dense'.format(name_layer))(layer_mbox_conf_flat)
             mbox_conf_list.append(layer_mbox_conf_flat)
             
             layer_mbox_defbox = DefaultBox(self.img_size,
                                         self.img_size[0]/layer_length*0.8,
                                         self.img_size[0]/layer_length,
                                         aspect_ratios=aspect_ratios,
-                                        variances=[0.1, 0.1, 0.1, 0.1],
+                                        variances=[0.1, 0.1, 0.2, 0.2],
                                         name='{}_mbox_defbox'.format(name_layer))(layer)
             mbox_defbox_list.append(layer_mbox_defbox)
             

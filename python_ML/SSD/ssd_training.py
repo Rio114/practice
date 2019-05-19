@@ -40,8 +40,9 @@ class MultiboxLoss(object):
         # References
             https://arxiv.org/abs/1504.08083
         """
-        abs_loss = tf.abs(y_true - y_pred)
-        sq_loss = 0.5 * (y_true - y_pred)**2
+        sub = y_true - y_pred
+        abs_loss = tf.abs(sub)
+        sq_loss = 0.5 * (sub)**2
         l1_loss = tf.where(tf.less(abs_loss, 1.0), sq_loss, abs_loss - 0.5)
         return tf.reduce_sum(l1_loss, -1)
 
@@ -76,7 +77,6 @@ class MultiboxLoss(object):
         """
         batch_size = tf.shape(y_true)[0]
         num_boxes = tf.to_float(tf.shape(y_true)[1])
-
         # loss for all priors
         conf_loss = self._softmax_loss(y_true[:, :, 4:-8],
                                        y_pred[:, :, 4:-8])
