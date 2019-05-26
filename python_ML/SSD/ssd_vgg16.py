@@ -64,7 +64,12 @@ class SSD_VGG16():
         # detectors from layers
         # self.detector_layers = [self.conv3_3, self.conv4_3, self.conv5_3]
 
-        self.detector_layers = [self.conv5_3, self.conv5_2]
+        ## Block 6
+        self.conv6_1 = Conv2D(128, (3, 3),activation='relu',padding='same',name='conv6_1')(self.pool5)
+        self.pool6 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool6')(self.conv6_1)
+        self.conv7_1 = Conv2D(128, (3, 3),activation='relu',padding='same',name='conv7_1')(self.pool6)
+
+        self.detector_layers = [self.conv6_1, self.conv7_1]
         self.pred_SSD = self.detectors()
         return  Model(self.inputs, self.pred_SSD)
 

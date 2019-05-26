@@ -28,54 +28,54 @@ class DefaultBox(Layer):
 
     def compute_output_shape(self, x):
         num_priors_ = len(self.aspect_ratios)
-        layer_width = x[1]
-        layer_height = x[2]
+        layer_height = x[1]
+        layer_width = x[2]
         num_boxes = num_priors_ * layer_width * layer_height
         return (x[0], num_boxes, 8)
 
     def call(self, x, mask=None):
         input_shape = K.int_shape(x)
 
-        layer_width = input_shape[1]
-        layer_height = input_shape[2]
+        layer_height = input_shape[1]
+        layer_width = input_shape[2]
         
-        img_width = self.img_size[0]
-        img_height = self.img_size[1]
+        img_height = self.img_size[0]
+        img_width = self.img_size[1]
 
-        box_widths = []
         box_heights = []
+        box_widths = []
 
         for ar in self.aspect_ratios:
             if ar == 1 and len(box_widths) == 0:
-                box_widths.append(self.min_size)
                 box_heights.append(self.min_size)
+                box_widths.append(self.min_size)
             elif ar == 1 and len(box_widths) > 0:
-                box_widths.append(np.sqrt(self.min_size * self.max_size))
                 box_heights.append(np.sqrt(self.min_size * self.max_size))
+                box_widths.append(np.sqrt(self.min_size * self.max_size))
             elif ar != 1:
-                box_widths.append(self.min_size * np.sqrt(ar))
                 box_heights.append(self.min_size / np.sqrt(ar))
+                box_widths.append(self.min_size * np.sqrt(ar))
 
-        box_widths = 0.5 * np.array(box_widths)
         box_heights = 0.5 * np.array(box_heights)
+        box_widths = 0.5 * np.array(box_widths)
 
-        step_x = img_width / layer_width
         step_y = img_height / layer_height       
-        lin_x = np.linspace(0.5 * step_x, img_width - 0.5 * step_x, layer_width)
+        step_x = img_width / layer_width
         lin_y = np.linspace(0.5 * step_y, img_height - 0.5 * step_y, layer_height)
-        centers_x, centers_y = np.meshgrid(lin_x, lin_y)
-        centers_x = centers_x.reshape(-1, 1)
+        lin_x = np.linspace(0.5 * step_x, img_width - 0.5 * step_x, layer_width)
+        centers_y, centers_x = np.meshgrid(lin_y, lin_x)
         centers_y = centers_y.reshape(-1, 1)
+        centers_x = centers_x.reshape(-1, 1)
 
         num_defaults = len(self.aspect_ratios)
-        default_boxes = np.concatenate((centers_x, centers_y), axis=1)
+        default_boxes = np.concatenate((centers_y, centers_x), axis=1)
         default_boxes = np.tile(default_boxes, (1, 2 * num_defaults))
-        default_boxes[:, ::4] -= box_widths
-        default_boxes[:, 1::4] -= box_heights
-        default_boxes[:, 2::4] += box_widths
-        default_boxes[:, 3::4] += box_heights
-        default_boxes[:, ::2] /= img_width
-        default_boxes[:, 1::2] /= img_height
+        default_boxes[:, ::4] -= box_heights
+        default_boxes[:, 1::4] -= box_widths
+        default_boxes[:, 2::4] += box_heights
+        default_boxes[:, 3::4] += box_widths
+        default_boxes[:, ::2] /= img_height
+        default_boxes[:, 1::2] /= img_width
         default_boxes = default_boxes.reshape(-1, 4)
         num_boxes = len(default_boxes)
 
