@@ -101,11 +101,11 @@ class BBoxUtility(object):
         # we encode variance
         encoded_box[:, :2][assign_mask] = box_center - assigned_priors_center
         encoded_box[:, :2][assign_mask] /= assigned_priors_wh
-        encoded_box[:, :2][assign_mask] /= assigned_priors[:, -4:-2]
+        # encoded_box[:, :2][assign_mask] /= assigned_priors[:, -4:-2]
         encoded_box[:, 2:4][assign_mask] = np.log(box_wh /
                                                   assigned_priors_wh)
-        encoded_box[:, 2:4][assign_mask] /= assigned_priors[:, -2:]
-        return encoded_box.ravel()
+        # encoded_box[:, 2:4][assign_mask] /= assigned_priors[:, -2:]
+        return encoded_box
 
     def assign_boxes(self, boxes):
         """Assign boxes to priors for training.
@@ -125,7 +125,7 @@ class BBoxUtility(object):
         if len(boxes) == 0:
             return assignment
         encoded_boxes = np.apply_along_axis(self.encode_box, 1, boxes[:, :4])
-        encoded_boxes = encoded_boxes.reshape(-1, self.num_priors, 5)
+        # encoded_boxes = encoded_boxes.reshape(-1, self.num_priors, 5)
         best_iou = encoded_boxes[:, :, -1].max(axis=0)
         best_iou_idx = encoded_boxes[:, :, -1].argmax(axis=0)
         best_iou_mask = best_iou > 0
@@ -221,3 +221,4 @@ class BBoxUtility(object):
                 results[-1] = results[-1][argsort]
                 results[-1] = results[-1][:keep_top_k]
         return results
+        

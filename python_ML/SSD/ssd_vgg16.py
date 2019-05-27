@@ -1,77 +1,169 @@
 from keras.models import Model
-from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import Input
-from keras.layers import Dense
-from keras.layers import Flatten
-from keras.layers import Reshape
-from keras.layers import Activation
-from keras.layers import concatenate
-from keras.layers import Dropout
+from keras.layers import Conv2D, MaxPooling2D, Input, Dense
+from keras.layers import Flatten, Reshape, Activation, Concatenate, Dropout
 
 from ssd_layer import DefaultBox
 
 class SSD_VGG16():
-    def __init__(self, num_classes, img_size=(300,300,3)):
+    def __init__(self, num_classes, img_size=(224, 224, 3), path='vgg16_original.hdf5'):
         self.img_size = img_size
         self.num_classes = num_classes
         self.dim_box = 4 #(cx, cy, w, h)
+        model = self.vgg16()
+        model.load_weights(path)
 
-    def vgg16(self, train_class=2):
+    def vgg16(self):
         """
+        build vgg16 network
         """
 
         ## Input
-        self.inputs = Input(shape=self.img_size, name='input')
+        img_size = (224, 224, 3)
+        inputs = Input(shape=img_size, name='input')
 
         ## Block 1
-        self.conv1_1 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv1_1')(self.inputs)
-        self.conv1_2 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv1_2')(self.conv1_1)
-        self.pool1 = MaxPooling2D((2,2),strides=(2,2),padding='same',name='pool1')(self.conv1_2)
+        self.conv1_1 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv1_1')
+        conv1_1 = self.conv1_1(inputs)
+        self.conv1_2 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv1_2')
+        conv1_2 = self.conv1_2(conv1_1)
+        self.pool1 = MaxPooling2D((2,2),strides=(2,2),padding='same',name='pool1')
+        pool1 = self.pool1(conv1_2)
 
         ## Block 2
-        self.conv2_1 = Conv2D(128, (3, 3),activation='relu',padding='same',name='conv2_1')(self.pool1)
-        self.conv2_2 = Conv2D(128, (3, 3),activation='relu',padding='same',name='conv2_2')(self.conv2_1)
-        self.pool2 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool2')(self.conv2_2)
+        self.conv2_1 = Conv2D(128, (3, 3),activation='relu',padding='same',name='conv2_1')
+        conv2_1 = self.conv2_1(pool1)
+        self.conv2_2 = Conv2D(128, (3, 3),activation='relu',padding='same',name='conv2_2')
+        conv2_2 = self.conv2_2(conv2_1)
+        self.pool2 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool2')
+        pool2 = self.pool2(conv2_2)
 
         ## Block 3
-        self.conv3_1 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv3_1')(self.pool2)
-        self.conv3_2 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv3_2')(self.conv3_1)
-        self.conv3_3 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv3_3')(self.conv3_2)
-        self.pool3 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool3')(self.conv3_3)
+        self.conv3_1 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv3_1')
+        conv3_1 = self.conv3_1(pool2)
+        self.conv3_2 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv3_2')
+        conv3_2 = self.conv3_2(conv3_1)
+        self.conv3_3 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv3_3')
+        conv3_3 = self.conv3_3(conv3_2)
+        self.pool3 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool3')
+        pool3 = self.pool3(conv3_3)
 
         ## Block 4
-        self.conv4_1 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv4_1')(self.pool3)
-        self.conv4_2 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv4_2')(self.conv4_1)
-        self.conv4_3 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv4_3')(self.conv4_2)
-        self.pool4 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool4')(self.conv4_3)
+        self.conv4_1 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv4_1')
+        conv4_1 = self.conv4_1(pool3)
+        self.conv4_2 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv4_2')
+        conv4_2 = self.conv4_2(conv4_1)
+        self.conv4_3 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv4_3')
+        conv4_3 = self.conv4_3(conv4_2)
+        self.pool4 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool4')
+        pool4 = self.pool4(conv4_3)
 
         ## Block 5
-        self.conv5_1 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv5_1')(self.pool4)
-        self.conv5_2 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv5_2')(self.conv5_1)
-        self.conv5_3 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv5_3')(self.conv5_2)
-        self.pool5 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool5')(self.conv5_3)
+        self.conv5_1 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv5_1')
+        conv5_1 = self.conv5_1(pool4)
+        self.conv5_2 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv5_2')
+        conv5_2 = self.conv5_2(conv5_1)
+        self.conv5_3 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv5_3')
+        conv5_3 = self.conv5_3(conv5_2)
+        self.pool5 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool5')
+        pool5 = self.pool5(conv5_3)
 
-        self.flat = Flatten(name='flatten')(self.pool5)
-        self.dense1 = Dense(4096, name='dense1')(self.flat)
-        self.dense2 = Dense(4096, name='dense2')(self.dense1)
-        self.dense3 = Dense(1000, name='dense3')(self.dense2)
-        self.pred_vgg16 = Activation('softmax',name='pred_CNN')(self.dense3)
-        return  Model(self.inputs, self.pred_vgg16)
+        self.flat = Flatten(name='flatten')
+        flat = self.flat(pool5)
+        self.dense1 = Dense(4096, name='dense1')
+        dense1 = self.dense1(flat)
+        self.dense2 = Dense(4096, name='dense2')
+        dense2 = self.dense2(dense1)
+        self.dense3 = Dense(1000, name='dense3')
+        dense3 = self.dense3(dense2)
+        self.pred_vgg16 = Activation('softmax',name='pred_CNN')
+        pred_vgg16 = self.pred_vgg16(dense3)
+        return  Model(inputs, pred_vgg16)
+
+    def VGG16_copy(self):
+        """
+        test both original and copy return the same output
+        """
+
+        ## Input
+        inputs = Input(shape=self.img_size, name='input')
+
+        ## Block 1
+        conv1_1 = self.conv1_1(inputs)
+        conv1_2 = self.conv1_2(conv1_1)
+        pool1 = self.pool1(conv1_2)
+
+        ## Block 2
+        conv2_1 = self.conv2_1(pool1)
+        conv2_2 = self.conv2_2(conv2_1)
+        pool2 = self.pool2(conv2_2)
+
+        ## Block 3
+        conv3_1 = self.conv3_1(pool2)
+        conv3_2 = self.conv3_2(conv3_1)
+        conv3_3 = self.conv3_3(conv3_2)
+        pool3 = self.pool3(conv3_3)
+
+        ## Block 4
+        conv4_1 = self.conv4_1(pool3)
+        conv4_2 = self.conv4_2(conv4_1)
+        conv4_3 = self.conv4_3(conv4_2)
+        pool4 = self.pool4(conv4_3)
+
+        ## Block 5
+        conv5_1 = self.conv5_1(pool4)
+        conv5_2 = self.conv5_2(conv5_1)
+        conv5_3 = self.conv5_3(conv5_2)
+        pool5 = self.pool5(conv5_3)
+
+        flat = self.flat(pool5)
+        dense1 = self.dense1(flat)
+        dense2 = self.dense2(dense1)
+        dense3 = self.dense3(dense2)
+        pred_vgg16 = self.pred_vgg16(dense3)
+        return  Model(inputs, pred_vgg16)
 
     def SSD(self):
-        # detectors from layers
-        # self.detector_layers = [self.conv3_3, self.conv4_3, self.conv5_3]
+        ## Input
+        inputs = Input(shape=self.img_size, name='input')
+
+        ## Block 1
+        conv1_1 = self.conv1_1(inputs)
+        conv1_2 = self.conv1_2(conv1_1)
+        pool1 = self.pool1(conv1_2)
+
+        ## Block 2
+        conv2_1 = self.conv2_1(pool1)
+        conv2_2 = self.conv2_2(conv2_1)
+        pool2 = self.pool2(conv2_2)
+
+        ## Block 3
+        conv3_1 = self.conv3_1(pool2)
+        conv3_2 = self.conv3_2(conv3_1)
+        conv3_3 = self.conv3_3(conv3_2)
+        pool3 = self.pool3(conv3_3)
+
+        ## Block 4
+        conv4_1 = self.conv4_1(pool3)
+        conv4_2 = self.conv4_2(conv4_1)
+        conv4_3 = self.conv4_3(conv4_2)
+        pool4 = self.pool4(conv4_3)
+
+        ## Block 5
+        conv5_1 = self.conv5_1(pool4)
+        conv5_2 = self.conv5_2(conv5_1)
+        conv5_3 = self.conv5_3(conv5_2)
+        pool5 = self.pool5(conv5_3)
 
         ## Block 6
-        self.conv6_1 = Conv2D(128, (3, 3),activation='relu',padding='same',name='conv6_1')(self.pool5)
-        self.pool6 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool6')(self.conv6_1)
-        self.conv7_1 = Conv2D(128, (3, 3),activation='relu',padding='same',name='conv7_1')(self.pool6)
+        conv6_1 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv6_1')(pool5)
+        pool6 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool6')(conv6_1)
+        conv7_1 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv7_1')(pool6)
+        pool7 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool7')(conv7_1)
+        conv8_1 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv8_1')(pool7)
 
-        self.detector_layers = [self.conv6_1, self.conv7_1]
-        self.pred_SSD = self.detectors()
-        return  Model(self.inputs, self.pred_SSD)
+        self.detector_layers = [conv6_1, conv7_1, conv8_1]
+        pred_SSD = self.detectors()
+        return  Model(inputs, pred_SSD)
 
     def get_detector(self):
         return self.detector_layers
@@ -113,16 +205,17 @@ class SSD_VGG16():
                                         name='{}_mbox_defbox'.format(name_layer))(layer)
             mbox_defbox_list.append(layer_mbox_defbox)
             
-        mbox_loc = concatenate(mbox_loc_list, name='mbox_loc', axis=1)
+        mbox_loc = Concatenate(name='mbox_loc', axis=1)(mbox_loc_list)
         num_boxes = mbox_loc._keras_shape[-1] // 4
         mbox_loc = Reshape((num_boxes, self.dim_box),name='mbox_loc_final')(mbox_loc)
 
-        mbox_conf = concatenate(mbox_conf_list,name='mbox_conf', axis=1)
+        mbox_conf = Concatenate(name='mbox_conf', axis=1)(mbox_conf_list)
         mbox_conf = Reshape((num_boxes, self.num_classes),name='mbox_conf_logits')(mbox_conf)
         mbox_conf = Activation('softmax',name='mbox_conf_final')(mbox_conf)
         
-        mbox_defbox = concatenate(mbox_defbox_list,name='mbox_defbox',axis=1)
+        mbox_defbox = Concatenate(name='mbox_defbox',axis=1)(mbox_defbox_list)
 
-        predictions = concatenate([mbox_loc, mbox_conf, mbox_defbox], name='predictions',axis=2)
+        predictions = Concatenate(name='predictions',axis=2)([mbox_loc, mbox_conf, mbox_defbox])
         
         return predictions
+        
