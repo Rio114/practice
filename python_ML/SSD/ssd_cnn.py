@@ -37,7 +37,6 @@ class SSD_CNN():
         self.conv5 = Conv2D(512, (3, 3),activation='relu',padding='same',name='conv5')(self.pool4)
         self.pool5 = MaxPooling2D((3, 3), strides=(3, 3), padding='same',name='pool5')(self.conv5)
 
-
         self.flat = Flatten(name='flatten')(self.pool5)
         self.dense1 = Dense(1024, name='dense1')(self.flat)
         self.dense3 = Dense(256, name='dense3')(self.dense1)

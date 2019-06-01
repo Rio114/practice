@@ -110,9 +110,7 @@ class MultiboxLoss(object):
         batch_idx = tf.tile(batch_idx, (1, num_neg_batch))
         full_indices = (tf.reshape(batch_idx, [-1]) * tf.to_int32(num_boxes) +
                         tf.reshape(indices, [-1]))
-        # full_indices = tf.concat(2, [tf.expand_dims(batch_idx, 2),
-        #                              tf.expand_dims(indices, 2)])
-        # neg_conf_loss = tf.gather_nd(conf_loss, full_indices)
+                        
         neg_conf_loss = tf.gather(tf.reshape(conf_loss, [-1]),
                                   full_indices)
         neg_conf_loss = tf.reshape(neg_conf_loss,

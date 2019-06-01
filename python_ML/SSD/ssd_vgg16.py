@@ -5,10 +5,11 @@ from keras.layers import Flatten, Reshape, Activation, Concatenate, Dropout
 from ssd_layer import DefaultBox
 
 class SSD_VGG16():
-    def __init__(self, num_classes, img_size=(224, 224, 3), path='vgg16_original.hdf5'):
+    def __init__(self, num_classes, img_size=(224, 224, 3),variances=[0.1, 0.1, 0.2, 0.2], path='vgg16_original.hdf5'):
         self.img_size = img_size
         self.num_classes = num_classes
         self.dim_box = 4 #(cx, cy, w, h)
+        self.variances = variances
         model = self.vgg16()
         model.load_weights(path)
 
@@ -83,7 +84,6 @@ class SSD_VGG16():
         """
         test both original and copy return the same output
         """
-
         ## Input
         inputs = Input(shape=self.img_size, name='input')
 
@@ -188,20 +188,18 @@ class SSD_VGG16():
                                     name='{}_mbox_loc'.format(name_layer))(layer)
             layer_length = layer_mbox_loc.shape[1].value
             layer_mbox_loc_flat = Flatten(name='{}_mbox_loc_flat'.format(name_layer))(layer_mbox_loc)
-            # layer_mbox_loc_denc = Dense(self.dim_box, name='{}_mbox_loc_dense'.format(name_layer))(layer_mbox_loc_flat)
             mbox_loc_list.append(layer_mbox_loc_flat)
             
             layer_mbox_conf = Conv2D(num_def * self.num_classes,(3,3),padding='same',
                                     name='{}_mbox_conf'.format(name_layer))(layer)
             layer_mbox_conf_flat = Flatten(name='{}_mbox_conf_flat'.format(name_layer))(layer_mbox_conf)
-            # layer_mbox_conf_denc = Dense(self.num_classes, name='{}_mbox_conf_dense'.format(name_layer))(layer_mbox_conf_flat)
             mbox_conf_list.append(layer_mbox_conf_flat)
             
             layer_mbox_defbox = DefaultBox(self.img_size,
                                         self.img_size[0]/layer_length*0.8,
                                         self.img_size[0]/layer_length,
                                         aspect_ratios=aspect_ratios,
-                                        variances=[0.1, 0.1, 0.2, 0.2],
+                                        variances=self.variances,
                                         name='{}_mbox_defbox'.format(name_layer))(layer)
             mbox_defbox_list.append(layer_mbox_defbox)
             
@@ -216,6 +214,5 @@ class SSD_VGG16():
         mbox_defbox = Concatenate(name='mbox_defbox',axis=1)(mbox_defbox_list)
 
         predictions = Concatenate(name='predictions',axis=2)([mbox_loc, mbox_conf, mbox_defbox])
-        
         return predictions
         

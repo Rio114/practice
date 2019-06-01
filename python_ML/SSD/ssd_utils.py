@@ -7,7 +7,7 @@ class BBoxUtility(object):
     # Arguments
         num_classes: Number of classes including background.
         priors: Priors and variances, numpy tensor of shape (num_priors, 8),
-            priors[i] = [xmin, ymin, xmax, ymax, varxc, varyc, varw, varh].
+            priors[i] = [ymin, xmin, ymax, xmax, varyc, varxc, varh, varw].
         overlap_threshold: Threshold to assign box to a prior.
         nms_thresh: Nms threshold.
         top_k: Number of total bboxes to be kept per image after nms step.
@@ -78,11 +78,11 @@ class BBoxUtility(object):
     def encode_box(self, box, return_iou=True):
         """Encode box for training, do it only for assigned priors.
         # Arguments
-            box: Box, numpy tensor of shape (4,).
+            box: Box, numpy tensor of shape (4,). (ymin, xmin, ymax, xmax)
             return_iou: Whether to concat iou to encoded values.
         # Return
-            encoded_box: Tensor with encoded box
-                numpy tensor of shape (num_priors, 4 + int(return_iou)).
+            encoded_box: Tensor with encoded box 
+                numpy tensor of shape (num_priors, 4 (cy cx, h, w) + int(return_iou)).
         """
         iou = self.iou(box)
         encoded_box = np.zeros((self.num_priors, 4 + return_iou))
@@ -99,12 +99,11 @@ class BBoxUtility(object):
         assigned_priors_wh = (assigned_priors[:, 2:4] -
                               assigned_priors[:, :2])
         # we encode variance
-        encoded_box[:, :2][assign_mask] = box_center - assigned_priors_center
+        encoded_box[:, :2][assign_mask] = box_center - assigned_priors_center # distance between box and default
         encoded_box[:, :2][assign_mask] /= assigned_priors_wh
-        # encoded_box[:, :2][assign_mask] /= assigned_priors[:, -4:-2]
-        encoded_box[:, 2:4][assign_mask] = np.log(box_wh /
-                                                  assigned_priors_wh)
-        # encoded_box[:, 2:4][assign_mask] /= assigned_priors[:, -2:]
+        encoded_box[:, :2][assign_mask] /= assigned_priors[:, -4:-2]
+        encoded_box[:, 2:4][assign_mask] = np.log(box_wh / assigned_priors_wh)
+        encoded_box[:, 2:4][assign_mask] /= assigned_priors[:, -2:]
         return encoded_box
 
     def assign_boxes(self, boxes):
@@ -127,8 +126,8 @@ class BBoxUtility(object):
         encoded_boxes = np.apply_along_axis(self.encode_box, 1, boxes[:, :4])
         # encoded_boxes = encoded_boxes.reshape(-1, self.num_priors, 5)
         best_iou = encoded_boxes[:, :, -1].max(axis=0)
-        best_iou_idx = encoded_boxes[:, :, -1].argmax(axis=0)
         best_iou_mask = best_iou > 0
+        best_iou_idx = encoded_boxes[:, :, -1].argmax(axis=0)
         best_iou_idx = best_iou_idx[best_iou_mask]
         assign_num = len(best_iou_idx)
         encoded_boxes = encoded_boxes[:, best_iou_mask, :]
@@ -144,7 +143,7 @@ class BBoxUtility(object):
         """Convert bboxes from local predictions to shifted priors.
         # Arguments
             mbox_loc: Numpy array of predicted locations.
-            mbox_priorbox: Numpy array of prior boxes.
+            mbox_priorbox: Numpy array of prior boxes. (ymin, xmin, ymax, xmax)
             variances: Numpy array of variances.
         # Return
             decode_bbox: Shifted priors.
@@ -153,6 +152,7 @@ class BBoxUtility(object):
         prior_width = mbox_priorbox[:, 3] - mbox_priorbox[:, 1]
         prior_center_y = 0.5 * (mbox_priorbox[:, 2] + mbox_priorbox[:, 0])
         prior_center_x = 0.5 * (mbox_priorbox[:, 3] + mbox_priorbox[:, 1])
+
         decode_bbox_center_y = mbox_loc[:, 0] * prior_height * variances[:, 0]
         decode_bbox_center_y += prior_center_y
         decode_bbox_center_x = mbox_loc[:, 1] * prior_width * variances[:, 1]
@@ -167,6 +167,7 @@ class BBoxUtility(object):
         decode_bbox_xmin = decode_bbox_center_x - 0.5 * decode_bbox_width
         decode_bbox_ymax = decode_bbox_center_y + 0.5 * decode_bbox_height
         decode_bbox_xmax = decode_bbox_center_x + 0.5 * decode_bbox_width
+
         decode_bbox = np.concatenate((decode_bbox_ymin[:, None],
                                       decode_bbox_xmin[:, None],
                                       decode_bbox_ymax[:, None],
@@ -187,12 +188,12 @@ class BBoxUtility(object):
                 whose confidences are larger than a threshold.
         # Return
             results: List of predictions for every picture. Each prediction is:
-                [label, confidence, xmin, ymin, xmax, ymax]
+                [label, confidence, ymin, xmin, ymax, xmax]
         """
         mbox_loc = predictions[:, :, :4]
-        variances = predictions[:, :, -4:]
-        mbox_priorbox = predictions[:, :, -8:-4]
         mbox_conf = predictions[:, :, 4:-8]
+        mbox_priorbox = predictions[:, :, -8:-4]
+        variances = predictions[:, :, -4:]
         results = []
         for i in range(len(mbox_loc)):
             results.append([])

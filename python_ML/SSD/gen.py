@@ -1,8 +1,7 @@
 import numpy as np
 from random import shuffle
-from scipy.misc import imread
-from scipy.misc import imresize
 from keras.applications.imagenet_utils import preprocess_input
+from keras.preprocessing import image
 
 class Generator(object):
     def __init__(self, gt, bbox_util,
@@ -87,8 +86,8 @@ class Generator(object):
         return img, y
     
     def random_sized_crop(self, img, targets):
-        img_w = img.shape[1]
         img_h = img.shape[0]
+        img_w = img.shape[1]
         img_area = img_w * img_h
         random_scale = np.random.random()
         random_scale *= (self.crop_area_range[1] -
@@ -99,38 +98,43 @@ class Generator(object):
         random_ratio *= (self.aspect_ratio_range[1] -
                          self.aspect_ratio_range[0])
         random_ratio += self.aspect_ratio_range[0]
-        w = np.round(np.sqrt(target_area * random_ratio))     
         h = np.round(np.sqrt(target_area / random_ratio))
+        w = np.round(np.sqrt(target_area * random_ratio))
         if np.random.random() < 0.5:
             w, h = h, w
-        w = min(w, img_w)
-        w_rel = w / img_w
-        w = int(w)
+
         h = min(h, img_h)
         h_rel = h / img_h
         h = int(h)
-        x = np.random.random() * (img_w - w)
-        x_rel = x / img_w
-        x = int(x)
+
+        w = min(w, img_w)
+        w_rel = w / img_w
+        w = int(w)
+
         y = np.random.random() * (img_h - h)
         y_rel = y / img_h
         y = int(y)
+
+        x = np.random.random() * (img_w - w)
+        x_rel = x / img_w
+        x = int(x)
+
         img = img[y:y+h, x:x+w]
         new_targets = []
         for box in targets:
-            cx = 0.5 * (box[0] + box[2])
-            cy = 0.5 * (box[1] + box[3])
+            cx = 0.5 * (box[1] + box[3])
+            cy = 0.5 * (box[0] + box[2])
             if (x_rel < cx < x_rel + w_rel and
                 y_rel < cy < y_rel + h_rel):
-                xmin = (box[0] - x_rel) / w_rel
                 ymin = (box[1] - y_rel) / h_rel
-                xmax = (box[2] - x_rel) / w_rel
+                xmin = (box[0] - x_rel) / w_rel
                 ymax = (box[3] - y_rel) / h_rel
-                xmin = max(0, xmin)
+                xmax = (box[2] - x_rel) / w_rel
                 ymin = max(0, ymin)
-                xmax = min(1, xmax)
+                xmin = max(0, xmin)
                 ymax = min(1, ymax)
-                box[:4] = [xmin, ymin, xmax, ymax]
+                xmax = min(1, xmax)
+                box[:4] = [ymin, xmin, ymax, xmax]
                 new_targets.append(box)
         new_targets = np.asarray(new_targets).reshape(-1, targets.shape[1])
         return img, new_targets
@@ -147,11 +151,12 @@ class Generator(object):
             targets = []
             for key in keys:            
                 img_path = self.path_prefix + key
-                img = imread(img_path).astype('float32')
+                img = image.load_img(img_path, target_size=self.image_size[:2])
+                img = image.img_to_array(img)
                 y = self.gt[key].copy()
                 if train and self.do_crop:
                     img, y = self.random_sized_crop(img, y)
-                img = imresize(img, self.image_size).astype('float32')
+                img = img.reshape(self.image_size) 
                 if train:
                     shuffle(self.color_jitter)
                     for jitter in self.color_jitter:
@@ -163,11 +168,11 @@ class Generator(object):
                     if self.vflip_prob > 0:
                         img, y = self.vertical_flip(img, y)
                 y = self.bbox_util.assign_boxes(y)
-                inputs.append(img)                
+                inputs.append(img/255)                
                 targets.append(y)
                 if len(targets) == self.batch_size:
                     tmp_inp = np.array(inputs)
                     tmp_targets = np.array(targets)
                     inputs = []
                     targets = []
-                    yield preprocess_input(tmp_inp), tmp_targets
+                    yield tmp_inp, tmp_targets
