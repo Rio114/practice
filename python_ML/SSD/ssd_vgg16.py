@@ -155,11 +155,11 @@ class SSD_VGG16():
         pool5 = self.pool5(conv5_3)
 
         ## Block 6
-        conv6_1 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv6_1')(pool5)
+        conv6_1 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv6_1')(pool5)
         pool6 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool6')(conv6_1)
-        conv7_1 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv7_1')(pool6)
+        conv7_1 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv7_1')(pool6)
         pool7 = MaxPooling2D((2, 2), strides=(2, 2), padding='same',name='pool7')(conv7_1)
-        conv8_1 = Conv2D(64, (3, 3),activation='relu',padding='same',name='conv8_1')(pool7)
+        conv8_1 = Conv2D(256, (3, 3),activation='relu',padding='same',name='conv8_1')(pool7)
 
         self.detector_layers = [conv6_1, conv7_1, conv8_1]
         pred_SSD = self.detectors()

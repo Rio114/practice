@@ -122,14 +122,14 @@ class Generator(object):
         img = img[y:y+h, x:x+w]
         new_targets = []
         for box in targets:
-            cx = 0.5 * (box[1] + box[3])
             cy = 0.5 * (box[0] + box[2])
+            cx = 0.5 * (box[1] + box[3])
             if (x_rel < cx < x_rel + w_rel and
                 y_rel < cy < y_rel + h_rel):
-                ymin = (box[1] - y_rel) / h_rel
-                xmin = (box[0] - x_rel) / w_rel
-                ymax = (box[3] - y_rel) / h_rel
-                xmax = (box[2] - x_rel) / w_rel
+                ymin = (box[0] - y_rel) / h_rel
+                xmin = (box[1] - x_rel) / w_rel
+                ymax = (box[2] - y_rel) / h_rel
+                xmax = (box[3] - x_rel) / w_rel
                 ymin = max(0, ymin)
                 xmin = max(0, xmin)
                 ymax = min(1, ymax)
@@ -140,6 +140,7 @@ class Generator(object):
         return img, new_targets
     
     def generate(self, train=True):
+        img_size = self.image_size
         while True:
             if train:
                 shuffle(self.train_keys)
@@ -151,12 +152,14 @@ class Generator(object):
             targets = []
             for key in keys:            
                 img_path = self.path_prefix + key
-                img = image.load_img(img_path, target_size=self.image_size[:2])
+                img = image.load_img(img_path, target_size=img_size[:2])
                 img = image.img_to_array(img)
                 y = self.gt[key].copy()
                 if train and self.do_crop:
                     img, y = self.random_sized_crop(img, y)
-                img = img.reshape(self.image_size) 
+                img = image.array_to_img(img)
+                img = img.resize((img_size[1],img_size[0]))
+                img = image.img_to_array(img)
                 if train:
                     shuffle(self.color_jitter)
                     for jitter in self.color_jitter:
