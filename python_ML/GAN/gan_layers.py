@@ -6,6 +6,7 @@ from keras.layers import Flatten
 from keras.layers import LeakyReLU, Dropout
 from keras.layers import ZeroPadding2D
 from keras.models import Model
+from keras.optimizers import Adam
 import numpy as np
 
 class gan_network():
@@ -15,6 +16,12 @@ class gan_network():
         self.generator = self.build_generator()
         self.discriminator = self.build_discriminator()
         self.combined = self.build_combined()
+        self.optimizer = Adam(lr=0.0002, beta_1=0.5)
+
+        self.combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+
         
     def build_generator(self):
         noise_shape = (None, self.z_dim)
@@ -38,6 +45,7 @@ class gan_network():
 
         for i, l in enumerate(self.gen_net):
             tensors.append(l(tensors[i]))
+
 
         return Model(tensors[0], tensors[-1])
         
@@ -104,7 +112,7 @@ class gan_network():
         for epoch in range(epochs):
             idx = np.random.randint(0, X_train.shape[0], half_batch)
             imgs = X_train[idx]
-            noise = np.random.uniform(-1, 1, (half_batch, self.z_dim))
+            noise = np.random.uniform(-1, 1, (half_batch, 1, self.z_dim))
 
             # -----------------
             # Training Discriminator
@@ -119,7 +127,9 @@ class gan_network():
             # Training Generator
             # -----------------
             self.unset_combine_trainable()
-            noise = np.random.uniform(-1, 1, (batch_size, self.z_dim))
+            noise = np.random.uniform(-1, 1, (batch_size, 1, self.z_dim))
             g_loss = self.combined.train_on_batch(noise, np.ones((batch_size, 1)))
 
-            print("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100 * d_loss[1], g_loss))
+            print("Epoch:%d" % epoch)
+            
+
