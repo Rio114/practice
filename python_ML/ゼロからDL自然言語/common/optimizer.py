@@ -13,7 +13,7 @@ class SGD:
         
     def update(self, params, grads):
         for i in range(len(params)):
-            params[i] -= self.lr * grads[i]
+            params[i].assign(params[i] - self.lr * grads[i])
 
 
 class Momentum:
@@ -97,7 +97,6 @@ class RMSprop:
             self.h[i] += (1 - self.decay_rate) * grads[i] * grads[i]
             params[i] -= self.lr * grads[i] / (np.sqrt(self.h[i]) + 1e-7)
 
-
 class Adam:
     '''
     Adam (http://arxiv.org/abs/1412.6980v8)
@@ -114,14 +113,15 @@ class Adam:
         if self.m is None:
             self.m, self.v = [], []
             for param in params:
-                self.m.append(np.zeros_like(param))
-                self.v.append(np.zeros_like(param))
+                self.m.append(tf.Variable(tf.zeros_like(param)))
+                self.v.append(tf.Variable(tf.zeros_like(param)))
         
         self.iter += 1
-        lr_t = self.lr * np.sqrt(1.0 - self.beta2**self.iter) / (1.0 - self.beta1**self.iter)
+        lr_t = self.lr * tf.math.sqrt(1.0 - self.beta2**self.iter) / (1.0 - self.beta1**self.iter)
 
         for i in range(len(params)):
-            self.m[i] += (1 - self.beta1) * (grads[i] - self.m[i])
-            self.v[i] += (1 - self.beta2) * (grads[i]**2 - self.v[i])
+            self.m[i].assign(self.m[i] + (1 - self.beta1) * (grads[i] - self.m[i]))
+            self.v[i].assign(self.v[i] + (1 - self.beta2) * (grads[i]**2 - self.v[i]))
             
-            params[i] -= lr_t * self.m[i] / (np.sqrt(self.v[i]) + 1e-7)
+            params[i].assign(params[i] - lr_t * self.m[i] / (tf.math.sqrt(self.v[i]) + 1e-7))
+

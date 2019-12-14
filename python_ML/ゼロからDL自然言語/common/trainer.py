@@ -6,7 +6,7 @@ import time
 import matplotlib.pyplot as plt
 from common.np import *  # import numpy as np
 from common.util import clip_grads
-
+import tensorflow as tf
 
 class Trainer:
     def __init__(self, model, optimizer):
@@ -27,9 +27,9 @@ class Trainer:
         start_time = time.time()
         for epoch in range(max_epoch):
             # シャッフル
-            idx = numpy.random.permutation(numpy.arange(data_size))
-            x = x[idx]
-            t = t[idx]
+            idx = tf.random.shuffle(tf.range(data_size))
+            x = x[idx.numpy()]
+            t = t[idx.numpy()]
 
             for iters in range(max_iters):
                 batch_x = x[iters*batch_size:(iters+1)*batch_size]
@@ -38,13 +38,12 @@ class Trainer:
                 # 勾配を求め、パラメータを更新
                 loss = model.forward(batch_x, batch_t)
                 model.backward()
-                params, grads = remove_duplicate(model.params, model.grads)  # 共有された重みを1つに集約
-                if max_grad is not None:
-                    clip_grads(grads, max_grad)
-                optimizer.update(params, grads)
+#                 params, grads = remove_duplicate(model.params, model.grads)  # 共有された重みを1つに集約
+#                 if max_grad is not None:
+#                     clip_grads(grads, max_grad)
+                optimizer.update(model.params, model.grads)
                 total_loss += loss
                 loss_count += 1
-
                 # 評価
                 if (eval_interval is not None) and (iters % eval_interval) == 0:
                     avg_loss = total_loss / loss_count
@@ -57,13 +56,14 @@ class Trainer:
             self.current_epoch += 1
 
     def plot(self, ylim=None):
-        x = numpy.arange(len(self.loss_list))
+        x = np.arange(len(self.loss_list))
         if ylim is not None:
             plt.ylim(*ylim)
         plt.plot(x, self.loss_list, label='train')
         plt.xlabel('iterations (x' + str(self.eval_interval) + ')')
         plt.ylabel('loss')
         plt.show()
+
 
 
 class RnnlmTrainer:

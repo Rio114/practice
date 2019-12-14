@@ -3,7 +3,7 @@ import sys
 sys.path.append('..')
 import os
 from common.np import *
-
+import tensorflow as tf
 
 def preprocess(text):
     text = text.lower()
@@ -18,7 +18,7 @@ def preprocess(text):
             word_to_id[word] = new_id
             id_to_word[new_id] = word
 
-    corpus = np.array([word_to_id[w] for w in words])
+    corpus = tf.constant([word_to_id[w] for w in words])
 
     return corpus, word_to_id, id_to_word
 
@@ -31,9 +31,11 @@ def cos_similarity(x, y, eps=1e-8):
     :param eps: ”0割り”防止のための微小値
     :return:
     '''
-    nx = x / (np.sqrt(np.sum(x ** 2)) + eps)
-    ny = y / (np.sqrt(np.sum(y ** 2)) + eps)
-    return np.dot(nx, ny)
+    x_f = tf.dtypes.cast(x, dtype='float')
+    y_f = tf.dtypes.cast(y, dtype='float')
+    nx = x_f / tf.math.sqrt(tf.math.reduce_sum(x_f**2) + eps)
+    ny = y_f / tf.math.sqrt(tf.math.reduce_sum(y_f**2) + eps)
+    return tf.tensordot(nx, ny, axes=1).numpy()
 
 
 def most_similar(query, word_to_id, id_to_word, word_matrix, top=5):
@@ -46,25 +48,24 @@ def most_similar(query, word_to_id, id_to_word, word_matrix, top=5):
     :param top: 上位何位まで表示するか
     '''
     if query not in word_to_id:
-        print('%s is not found' % query)
+        print('%s is no found' % query)
         return
-
+    
     print('\n[query] ' + query)
     query_id = word_to_id[query]
-    query_vec = word_matrix[query_id]
-
+    query_vec = tf.slice(word_matrix, [query_id, 0], [1, 7]).numpy()[0]
+    
     vocab_size = len(id_to_word)
-
     similarity = np.zeros(vocab_size)
     for i in range(vocab_size):
-        similarity[i] = cos_similarity(word_matrix[i], query_vec)
-
+        similarity[i] = cos_similarity(tf.slice(word_matrix, [i, 0], [1, 7]).numpy()[0], query_vec)
+    
     count = 0
     for i in (-1 * similarity).argsort():
         if id_to_word[i] == query:
             continue
         print(' %s: %s' % (id_to_word[i], similarity[i]))
-
+        
         count += 1
         if count >= top:
             return
@@ -103,7 +104,7 @@ def create_co_matrix(corpus, vocab_size, window_size=1):
     :return: 共起行列
     '''
     corpus_size = len(corpus)
-    co_matrix = np.zeros((vocab_size, vocab_size), dtype=np.int32)
+    co_matrix = np.zeros((vocab_size, vocab_size), dtype='int32')
 
     for idx, word_id in enumerate(corpus):
         for i in range(1, window_size + 1):
@@ -118,7 +119,7 @@ def create_co_matrix(corpus, vocab_size, window_size=1):
                 right_word_id = corpus[right_idx]
                 co_matrix[word_id, right_word_id] += 1
 
-    return co_matrix
+    return tf.constant(co_matrix, dtype='int32')
 
 
 def ppmi(C, verbose=False, eps = 1e-8):
@@ -128,22 +129,14 @@ def ppmi(C, verbose=False, eps = 1e-8):
     :param verbose: 進行状況を出力するかどうか
     :return:
     '''
-    M = np.zeros_like(C, dtype=np.float32)
-    N = np.sum(C)
-    S = np.sum(C, axis=0)
-    total = C.shape[0] * C.shape[1]
-    cnt = 0
+    C = tf.dtypes.cast(C, dtype='float')
+    M = np.zeros_like(C.numpy(), dtype='float')
+    N = tf.dtypes.cast(tf.math.reduce_sum(C), dtype='float')
+    S = tf.dtypes.cast((tf.math.reduce_sum(C, axis=0)), dtype='float')
 
-    for i in range(C.shape[0]):
-        for j in range(C.shape[1]):
-            pmi = np.log2(C[i, j] * N / (S[j]*S[i]) + eps)
-            M[i, j] = max(0, pmi)
-
-            if verbose:
-                cnt += 1
-                if cnt % (total//100) == 0:
-                    print('%.1f%% done' % (100*cnt/total))
-    return M
+    pmi = tf.math.log(N * C / (tf.tensordot(S, S, axes=0) + eps) + eps) / np.log(2)
+    
+    return tf.dtypes.cast(tf.greater(pmi, 0), dtype='float') * pmi + M #-0 -> 0
 
 
 def create_contexts_target(corpus, window_size=1):
