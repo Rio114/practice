@@ -28,6 +28,7 @@ class Trainer:
         for epoch in range(max_epoch):
             # シャッフル
             idx = tf.random.shuffle(tf.range(data_size))
+            print(idx)
             x = x[idx.numpy()]
             t = t[idx.numpy()]
 

@@ -46,15 +46,4 @@ class SimpleCBOW:
         self.in_layer1.backward(da)
         self.in_layer0.backward(da)
         
-        self.grads = []
-        layers = [
-                self.in_layer0,
-                self.in_layer1,
-                self.out_layer,
-                self.loss_layer
-        ]
-        
-        for layer in layers:
-            self.grads += layer.grads
-        
         return None

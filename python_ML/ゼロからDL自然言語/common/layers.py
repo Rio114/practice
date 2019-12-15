@@ -21,7 +21,7 @@ class Sigmoid:
 class Affine:
     def __init__(self, W, b):
         self.params = [W, b]
-        self.grads = [tf.zeros_like(W), tf.zeros_like(b)]
+        self.grads = [tf.Variable(tf.zeros_like(W)), tf.Variable(tf.zeros_like(b))]
         self.x = None
     
     def forward(self, x):
@@ -35,14 +35,14 @@ class Affine:
         dx = tf.matmul(dout, tf.transpose(W))
         dW = tf.matmul(tf.transpose(self.x), dout)
         db = tf.math.reduce_sum(dout, axis=0)
-        self.grads[0] = dW
-        self.grads[1] = db
+        self.grads[0].assign(dW)
+        self.grads[1].assign(db)
         return dx
     
 class MatMul:
     def __init__(self, W):
         self.params = [W]
-        self.grads = [tf.zeros_like(W)]
+        self.grads = [tf.Variable(tf.zeros_like(W))]
         self.x = None
         
     def forward(self, x):
@@ -56,7 +56,7 @@ class MatMul:
         W, = self.params
         dx = tf.matmul(dout, tf.transpose(W))
         dW = tf.matmul(tf.transpose(self.x), dout)
-        self.grads[0] = dW
+        self.grads[0].assign(dW)
         return dx
 
 class Softmax:

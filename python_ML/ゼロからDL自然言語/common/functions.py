@@ -20,7 +20,7 @@ def softmax(x):
 def cross_entropy_error(y, t):
     num_label = y.shape[1]
     t = tf.dtypes.cast(t, dtype='float')
-    
+
     if t.ndim == 1:
         t = tf.one_hot(t, num_label)
         

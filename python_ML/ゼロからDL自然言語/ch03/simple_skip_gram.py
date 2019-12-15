@@ -27,6 +27,7 @@ class SimpleSkipGram:
         self.grads = []
         for layer in layers:
             self.params += layer.params
+            self.grads += layer.grads
             
         self.word_vecs = W_in
 
@@ -44,16 +45,5 @@ class SimpleSkipGram:
         ds = dl1 + dl2
         dh = self.out_layer.backward(ds)
         self.in_layer.backward(dh)
-        
-        self.grads = []
-        layers = [
-                self.in_layer,
-                self.out_layer,
-                self.loss_layer1,
-                self.loss_layer2
-        ]
-        
-        for layer in layers:
-            self.grads += layer.grads
         
         return None

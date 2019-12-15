@@ -2,6 +2,7 @@
 import sys
 sys.path.append('..')
 from common.np import *
+import tensorflow as tf
 
 
 class SGD:
