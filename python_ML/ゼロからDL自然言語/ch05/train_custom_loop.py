@@ -6,6 +6,7 @@ import numpy as np
 from common.optimizer import SGD
 from dataset import ptb
 from simple_rnnlm import SimpleRnnlm
+import tensorflow as tf
 
 
 # ハイパーパラメータの設定
@@ -61,7 +62,7 @@ for epoch in range(max_epoch):
         loss_count += 1
 
     # エポックごとにパープレキシティの評価
-    ppl = np.exp(total_loss / loss_count)
+    ppl = tf.math.exp(total_loss / loss_count)
     print('| epoch %d | perplexity %.2f'
           % (epoch+1, ppl))
     ppl_list.append(float(ppl))

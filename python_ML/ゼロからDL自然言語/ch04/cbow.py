@@ -5,14 +5,13 @@ from common.np import *  # import numpy as np
 from common.layers import Embedding
 from ch04.negative_sampling_layer import NegativeSamplingLoss
 
-
 class CBOW:
     def __init__(self, vocab_size, hidden_size, window_size, corpus):
         V, H = vocab_size, hidden_size
 
         # 重みの初期化
-        W_in = 0.01 * np.random.randn(V, H).astype('f')
-        W_out = 0.01 * np.random.randn(V, H).astype('f')
+        W_in = tf.Variable(tf.random.normal((V, H), mean=0.0, stddev=0.01, dtype='float'))
+        W_out = tf.Variable(tf.random.normal((V, H), mean=0.0, stddev=0.01, dtype='float'))
 
         # レイヤの生成
         self.in_layers = []

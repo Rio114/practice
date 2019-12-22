@@ -18,12 +18,10 @@ def softmax(x):
     return x
 
 def cross_entropy_error(y, t):
-    num_label = y.shape[1]
-    t = tf.dtypes.cast(t, dtype='float')
-
+    num_label = y.shape[0]
+#     print(y.shape)
     if t.ndim == 1:
-        t = tf.one_hot(t, num_label)
-        
-    batch_size = y.shape[0]
+        t = tf.constant(np.identity(num_label)[t.numpy()], dtype='float')
+    batch_size = y.shape[1]
 
-    return -tf.reduce_sum(tf.math.log(tf.reduce_max(y*t, axis=1))) / batch_size
+    return -tf.reduce_sum(tf.math.log(y)*t) / batch_size

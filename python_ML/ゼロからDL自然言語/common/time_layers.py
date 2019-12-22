@@ -7,13 +7,13 @@ from common.functions import sigmoid
 class RNN:
     def __init__(self, Wx, Wh, b):
         self.params = [Wx, Wh, b]
-        self.grads = [np.zeros_like(Wx), np.zeros_like(Wh), np.zeros_like(b)]
+        self.grads = [tf.Variable(tf.zeros_like(Wx)), tf.Variable(tf.zeros_like(Wh)), tf.Variable(tf.zeros_like(b))]
         self.cache = None
 
     def forward(self, x, h_prev):
         Wx, Wh, b = self.params
-        t = np.dot(h_prev, Wh) + np.dot(x, Wx) + b
-        h_next = np.tanh(t)
+        t = tf.matmul(h_prev, Wh) + tf.matmul(x, Wx) + b
+        h_next = tf.math.tanh(t)
 
         self.cache = (x, h_prev, h_next)
         return h_next
@@ -23,23 +23,22 @@ class RNN:
         x, h_prev, h_next = self.cache
 
         dt = dh_next * (1 - h_next ** 2)
-        db = np.sum(dt, axis=0)
-        dWh = np.dot(h_prev.T, dt)
-        dh_prev = np.dot(dt, Wh.T)
-        dWx = np.dot(x.T, dt)
-        dx = np.dot(dt, Wx.T)
-
-        self.grads[0][...] = dWx
-        self.grads[1][...] = dWh
-        self.grads[2][...] = db
+        db = tf.math.reduce_sum(dt, axis=0)
+        dWh = tf.matmul(tf.transpose(h_prev), dt)
+        dh_prev = tf.matmul(dt, tf.transpose(Wh))
+        dWx = tf.matmul(tf.transpose(x), dt)
+        dx = tf.matmul(dt, tf.transpose(Wx))
+        
+        self.grads[0].assign(dWx)
+        self.grads[1].assign(dWh)
+        self.grads[2].assign(db)
 
         return dx, dh_prev
-
 
 class TimeRNN:
     def __init__(self, Wx, Wh, b, stateful=False):
         self.params = [Wx, Wh, b]
-        self.grads = [np.zeros_like(Wx), np.zeros_like(Wh), np.zeros_like(b)]
+        self.grads = [tf.Variable(tf.zeros_like(Wx)), tf.Variable(tf.zeros_like(Wh)), tf.Variable(tf.zeros_like(b))]
         self.layers = None
 
         self.h, self.dh = None, None
@@ -51,10 +50,11 @@ class TimeRNN:
         D, H = Wx.shape
 
         self.layers = []
-        hs = np.empty((N, T, H), dtype='f')
+        # hs = tf.Variable(tf.zeros((N, T, H), dtype='float32'))
+        hs = np.zeros((N, T, H), dtype='f')
 
         if not self.stateful or self.h is None:
-            self.h = np.zeros((N, H), dtype='f')
+            self.h = tf.Variable(tf.zeros((N, H), dtype='float32'))
 
         for t in range(T):
             layer = RNN(*self.params)
@@ -62,14 +62,14 @@ class TimeRNN:
             hs[:, t, :] = self.h
             self.layers.append(layer)
 
-        return hs
+        return tf.Variable(hs)
 
     def backward(self, dhs):
         Wx, Wh, b = self.params
         N, T, H = dhs.shape
         D, H = Wx.shape
+        dxs = np.zeros((N, T, D), dtype='f')
 
-        dxs = np.empty((N, T, D), dtype='f')
         dh = 0
         grads = [0, 0, 0]
         for t in reversed(range(T)):
@@ -78,13 +78,13 @@ class TimeRNN:
             dxs[:, t, :] = dx
 
             for i, grad in enumerate(layer.grads):
-                grads[i] += grad
+                grads[i].assign(grads[i] + grad)
 
         for i, grad in enumerate(grads):
-            self.grads[i][...] = grad
+            self.grads[i].assign(grad)
         self.dh = dh
 
-        return dxs
+        return tf.Variable(dxs)
 
     def set_state(self, h):
         self.h = h
@@ -241,10 +241,9 @@ class TimeEmbedding:
 
         for t in range(T):
             layer = Embedding(self.W)
-            out[:, t, :] = layer.forward(xs[:, t])
+            out[:, t, :] = layer.forward(xs[:, t]).numpy()
             self.layers.append(layer)
-
-        return out
+        return tf.Variable(out)
 
     def backward(self, dout):
         N, T, D = dout.shape
@@ -255,7 +254,7 @@ class TimeEmbedding:
             layer.backward(dout[:, t, :])
             grad += layer.grads[0]
 
-        self.grads[0][...] = grad
+        self.grads[0].assign(grad)
         return None
 
 
@@ -269,10 +268,11 @@ class TimeAffine:
         N, T, D = x.shape
         W, b = self.params
 
-        rx = x.reshape(N*T, -1)
-        out = np.dot(rx, W) + b
+        # rx = x.reshape(N*T, -1)
+        rx = tf.reshape(x, (N*T, D))
+        out = tf.matmul(rx, W) + b
         self.x = x
-        return out.reshape(N, T, -1)
+        return tf.reshape(out, (N, T, -1))
 
     def backward(self, dout):
         x = self.x
@@ -308,8 +308,8 @@ class TimeSoftmaxWithLoss:
         mask = (ts != self.ignore_label)
 
         # バッチ分と時系列分をまとめる（reshape）
-        xs = xs.reshape(N * T, V)
-        ts = ts.reshape(N * T)
+        xs = tf.reshape(xs, (N * T, V))
+        ts = tf.reshape(ts, (N * T, 1))
         mask = mask.reshape(N * T)
 
         ys = softmax(xs)
