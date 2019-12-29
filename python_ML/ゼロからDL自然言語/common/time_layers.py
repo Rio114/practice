@@ -28,7 +28,7 @@ class RNN:
         dh_prev = tf.matmul(dt, tf.transpose(Wh))
         dWx = tf.matmul(tf.transpose(x), dt)
         dx = tf.matmul(dt, tf.transpose(Wx))
-        
+
         self.grads[0].assign(dWx)
         self.grads[1].assign(dWh)
         self.grads[2].assign(db)
@@ -38,7 +38,9 @@ class RNN:
 class TimeRNN:
     def __init__(self, Wx, Wh, b, stateful=False):
         self.params = [Wx, Wh, b]
-        self.grads = [tf.Variable(tf.zeros_like(Wx)), tf.Variable(tf.zeros_like(Wh)), tf.Variable(tf.zeros_like(b))]
+        self.grads = [tf.Variable(tf.zeros_like(Wx)),
+                     tf.Variable(tf.zeros_like(Wh)),
+                      tf.Variable(tf.zeros_like(b))]
         self.layers = None
 
         self.h, self.dh = None, None
@@ -78,7 +80,7 @@ class TimeRNN:
             dxs[:, t, :] = dx
 
             for i, grad in enumerate(layer.grads):
-                grads[i].assign(grads[i] + grad)
+                grads[i] += grad.numpy()
 
         for i, grad in enumerate(grads):
             self.grads[i].assign(grad)
@@ -252,22 +254,21 @@ class TimeEmbedding:
         for t in range(T):
             layer = self.layers[t]
             layer.backward(dout[:, t, :])
-            grad += layer.grads[0]
+            grad += layer.grads[0].numpy()
 
-        self.grads[0].assign(grad)
+        self.grads[0] = grad
         return None
 
 
 class TimeAffine:
     def __init__(self, W, b):
         self.params = [W, b]
-        self.grads = [np.zeros_like(W), np.zeros_like(b)]
+        self.grads = [tf.Variable(tf.zeros_like(W)), tf.Variable(tf.zeros_like(b))]
         self.x = None
 
     def forward(self, x):
         N, T, D = x.shape
         W, b = self.params
-
         # rx = x.reshape(N*T, -1)
         rx = tf.reshape(x, (N*T, D))
         out = tf.matmul(rx, W) + b
@@ -275,7 +276,7 @@ class TimeAffine:
         return tf.reshape(out, (N, T, -1))
 
     def backward(self, dout):
-        x = self.x
+        x = self.x.numpy()
         N, T, D = x.shape
         W, b = self.params
 
@@ -284,14 +285,13 @@ class TimeAffine:
 
         db = np.sum(dout, axis=0)
         dW = np.dot(rx.T, dout)
-        dx = np.dot(dout, W.T)
+        dx = np.dot(dout, tf.transpose(W).numpy())
         dx = dx.reshape(*x.shape)
 
-        self.grads[0][...] = dW
-        self.grads[1][...] = db
+        self.grads[0].assign(dW)
+        self.grads[1].assign(db)
 
         return dx
-
 
 class TimeSoftmaxWithLoss:
     def __init__(self):
@@ -300,19 +300,21 @@ class TimeSoftmaxWithLoss:
         self.ignore_label = -1
 
     def forward(self, xs, ts):
-        N, T, V = xs.shape
+        self.xs = xs.numpy()
+        self.ts = ts.numpy()
+        N, T, V =  self.xs.shape
 
-        if ts.ndim == 3:  # 教師ラベルがone-hotベクトルの場合
-            ts = ts.argmax(axis=2)
+        if self.ts.ndim == 3:  # 教師ラベルがone-hotベクトルの場合
+            self.ts = self.ts.argmax(axis=2)
 
-        mask = (ts != self.ignore_label)
+        mask = (self.ts != self.ignore_label)
 
         # バッチ分と時系列分をまとめる（reshape）
-        xs = tf.reshape(xs, (N * T, V))
-        ts = tf.reshape(ts, (N * T, 1))
-        mask = mask.reshape(N * T)
+        xs = self.xs.reshape(N * T, V)
+        ts = self.ts.reshape(-1).astype('int32')
+        mask = mask.reshape(-1)
 
-        ys = softmax(xs)
+        ys = softmax(xs).numpy()
         ls = np.log(ys[np.arange(N * T), ts])
         ls *= mask  # ignore_labelに該当するデータは損失を0にする
         loss = -np.sum(ls)
@@ -612,7 +614,3 @@ class Simple_TimeAffine:
             self.db += layer.db
 
         return dxs
-
-
-
-

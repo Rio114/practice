@@ -17,19 +17,19 @@ class Sigmoid:
     def backward(self, dout):
         dx = dout * (1.0 - self.out) * self.out
         return dx
-    
+
 class Affine:
     def __init__(self, W, b):
         self.params = [W, b]
         self.grads = [tf.Variable(tf.zeros_like(W)), tf.Variable(tf.zeros_like(b))]
         self.x = None
-    
+
     def forward(self, x):
         W, b = self.params
         out = tf.matmul(x, W) + b
         self.x = x
         return out
-    
+
     def backward(self, dout):
         W, b = self.params
         dx = tf.matmul(dout, tf.transpose(W))
@@ -38,20 +38,20 @@ class Affine:
         self.grads[0].assign(dW)
         self.grads[1].assign(db)
         return dx
-    
+
 class MatMul:
     def __init__(self, W):
         self.params = [W]
         self.grads = [tf.Variable(tf.zeros_like(W))]
         self.x = None
-        
+
     def forward(self, x):
         W, = self.params
         x = tf.dtypes.cast(x, dtype='float')
         out = tf.matmul(x, W)
         self.x = x
         return out
-    
+
     def backward(self, dout):
         W, = self.params
         dx = tf.matmul(dout, tf.transpose(W))
@@ -87,7 +87,7 @@ class SoftmaxWithLoss:
         self.num_label = self.y.shape[1]
         if self.t.ndim == 1:
             self.t = tf.one_hot(self.t, num_label)
-        
+
         loss = cross_entropy_error(self.y, self.t)
         return loss
 
@@ -117,7 +117,7 @@ class SigmoidWithLoss:
         self.y = 1 / (1 + tf.math.exp(-x))
         self.loss = cross_entropy_error(tf.constant([1 - self.y.numpy(), self.y.numpy()]),
                                         tf.constant([1 - self.t.numpy(), self.t.numpy()], dtype='float32'))
-        
+
         return self.loss
 
     def backward(self, dout=1):
@@ -152,13 +152,13 @@ class Embedding:
 #         self.grads = [tf.Variable(tf.zeros_like(W))]
         self.grads = [tf.Variable(tf.zeros_like(W))]
         self.idx = None
-        
+
     def forward(self, idx):
         W, = self.params
-        self.idx = idx
-        out = W.numpy()[idx, :]
+        self.idx = idx.numpy().astype('int32')
+        out = W.numpy()[self.idx]
         return tf.Variable(out)
-    
+
     def backward(self, dout):
 #         for word_id in self.idx:
 #             self.grads[0].assign(self.grads[0] + tf.slice(dout, [word_id, 0], [1, dout.shape[1]]))
@@ -173,13 +173,13 @@ class EmbeddingDot:
         self.params = self.embed.params
         self.grads = self.embed.grads
         self.cache = None
-        
+
     def forward(self, h, idx):
         target_W = self.embed.forward(idx)
         out = tf.math.reduce_sum(target_W * h, axis=1)
         self.cache = (h, target_W)
         return out
-    
+
     def backward(self, dout):
         h, target_W = self.cache
         dout = tf.reshape(dout, (dout.shape[0], 1))

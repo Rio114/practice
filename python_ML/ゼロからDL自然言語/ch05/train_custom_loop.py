@@ -55,6 +55,8 @@ for epoch in range(max_epoch):
             time_idx += 1
 
         # 勾配を求め、パラメータを更新
+        batch_x = tf.constant(batch_x, dtype='float32')
+        batch_t = tf.constant(batch_t, dtype='float32')
         loss = model.forward(batch_x, batch_t)
         model.backward()
         optimizer.update(model.params, model.grads)
