@@ -155,15 +155,14 @@ class Embedding:
 
     def forward(self, idx):
         W, = self.params
-        self.idx = idx.numpy().astype('int32')
-        out = W.numpy()[self.idx]
-        return tf.Variable(out)
+        self.idx = idx
+        out = tf.gather(W, self.idx)
+        return out
 
     def backward(self, dout):
-#         for word_id in self.idx:
-#             self.grads[0].assign(self.grads[0] + tf.slice(dout, [word_id, 0], [1, dout.shape[1]]))
-        grads_np = np.zeros_like(self.params[0].numpy())
-        grads_np[self.idx, :] += dout.numpy()
+        W = self.grads[0]
+        idx = tf.reshape(self.idx, (self.idx.shape[0], 1))
+        grads_np = tf.scatter_nd(idx, dout, W.shape)
         self.grads[0].assign(grads_np)
         return None
 

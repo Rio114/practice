@@ -11,11 +11,11 @@ class SimpleRnnlm:
         rn = tf.random.normal
 
         # 重みの初期化
-        embed_W = tf.Variable(rn((V, D), mean=0.0, stddev=0.01, dtype='float') / 100)
-        rnn_Wx = tf.Variable(rn((D, H), mean=0.0, stddev=0.01, dtype='float') / np.sqrt(D))
-        rnn_Wh = tf.Variable(rn((H, H), mean=0.0, stddev=0.01, dtype='float') / np.sqrt(H))
+        embed_W = tf.Variable(rn((V, D), dtype='float') / 100)
+        rnn_Wx = tf.Variable(rn((D, H), dtype='float') / np.sqrt(D))
+        rnn_Wh = tf.Variable(rn((H, H),  dtype='float') / np.sqrt(H))
         rnn_b = tf.Variable(tf.zeros(H, dtype='float'))
-        affine_W = tf.Variable(rn((H, V), mean=0.0, stddev=0.01, dtype='float') / np.sqrt(H))
+        affine_W = tf.Variable(rn((H, V), dtype='float') / np.sqrt(H))
         affine_b = tf.Variable(tf.zeros(V, dtype='float'))
 
         # レイヤの生成
