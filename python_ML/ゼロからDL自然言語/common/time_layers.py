@@ -238,27 +238,29 @@ class TimeEmbedding:
         N, T = xs.shape
         V, D = self.W.shape
 
-        out = np.empty((N, T, D), dtype='f')
+        out = tf.Variable(tf.zeros((N, T, D)), dtype='float32')
         self.layers = []
-
+        out_list = []
         for t in range(T):
             layer = Embedding(self.W)
-            out[:, t, :] = layer.forward(xs[:, t]).numpy()
+            out_temp = tf.reshape(layer.forward(xs[:, t]), shape=(1, N, D))
+            out_list.append(out_temp)
             self.layers.append(layer)
-        return tf.Variable(out)
+        out = tf.transpose(tf.concat(out_list, axis=0), perm=(1,0,2))
+        return out
 
     def backward(self, dout):
         N, T, D = dout.shape
-
         grad = 0
         for t in range(T):
             layer = self.layers[t]
             layer.backward(dout[:, t, :])
-            grad += layer.grads[0].numpy()
-
+            if t == 0:
+                grad = layer.grads[0]
+            else:
+                grad.assign(grad + layer.grads[0])
         self.grads[0] = grad
         return None
-
 
 class TimeAffine:
     def __init__(self, W, b):
