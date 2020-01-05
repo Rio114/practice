@@ -278,17 +278,17 @@ class TimeAffine:
         return tf.reshape(out, (N, T, -1))
 
     def backward(self, dout):
-        x = self.x.numpy()
+        x = self.x
         N, T, D = x.shape
         W, b = self.params
 
-        dout = dout.reshape(N*T, -1)
-        rx = x.reshape(N*T, -1)
+        dout = tf.reshape(dout, (N*T, -1))
+        rx = tf.reshape(x, (N*T, -1))
 
-        db = np.sum(dout, axis=0)
-        dW = np.dot(rx.T, dout)
-        dx = np.dot(dout, tf.transpose(W).numpy())
-        dx = dx.reshape(*x.shape)
+        db = tf.math.reduce_sum(dout, axis=0)
+        dW = tf.matmul(tf.transpose(rx), dout)
+        dx = tf.matmul(dout, tf.transpose(W))
+        dx = tf.reshape(dx, x.shape)
 
         self.grads[0].assign(dW)
         self.grads[1].assign(db)
@@ -302,8 +302,8 @@ class TimeSoftmaxWithLoss:
         self.ignore_label = -1
 
     def forward(self, xs, ts):
-        self.xs = xs.numpy()
-        self.ts = ts.numpy()
+        self.xs = xs
+        self.ts = ts
         N, T, V =  self.xs.shape
 
         if self.ts.ndim == 3:  # 教師ラベルがone-hotベクトルの場合
@@ -312,32 +312,28 @@ class TimeSoftmaxWithLoss:
         mask = (self.ts != self.ignore_label)
 
         # バッチ分と時系列分をまとめる（reshape）
-        xs = self.xs.reshape(N * T, V)
-        ts = self.ts.reshape(-1).astype('int32')
-        mask = mask.reshape(-1)
-
-        ys = softmax(xs).numpy()
-        ls = np.log(ys[np.arange(N * T), ts])
-        ls *= mask  # ignore_labelに該当するデータは損失を0にする
-        loss = -np.sum(ls)
-        loss /= mask.sum()
-
+        xs = tf.reshape(self.xs, (N * T, V))
+        ts = tf.reshape(self.ts, (N * T, 1))
+        # mask = tf.reshape(mask, (1, N * T))[0]
+        idx = tf.constant([[i] for i in range(N * T)])
+        ys = softmax(xs)
+        idx_ts = tf.concat([idx, ts], axis=1)
+        ls = tf.math.log(tf.gather_nd(ys, idx_ts))
+        # ls.assign(ls * mask)
+        loss = -tf.math.reduce_sum(ls).numpy()
+        loss /= np.sum(mask.numpy())
         self.cache = (ts, ys, mask, (N, T, V))
         return loss
 
     def backward(self, dout=1):
         ts, ys, mask, (N, T, V) = self.cache
-
-        dx = ys
+        dx = ys.numpy()
         dx[np.arange(N * T), ts] -= 1
         dx *= dout
-        dx /= mask.sum()
-        dx *= mask[:, np.newaxis]  # ignore_labelに該当するデータは勾配を0にする
-
-        dx = dx.reshape((N, T, V))
-
+        # dx /= tf.math.reduce_sum(mask)
+        # dx *= mask[:, np.newaxis]  # ignore_labelに該当するデータは勾配を0にする
+        dx = tf.reshape(dx, (N, T, V))
         return dx
-
 
 class TimeDropout:
     def __init__(self, dropout_ratio=0.5):
