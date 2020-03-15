@@ -1,52 +1,37 @@
-#include<cstdio>
-#include<cstdlib>
-#include<cstring>
-#include<vector>
-#include<stack>
 #include<iostream>
-#include<tuple>
+#include<stack>
+#include<string>
+#include<vector>
+#include<algorithm>
 using namespace std;
 
 int main(){
-    char land[20000];
     stack<int> depth;
-    stack<tuple<int, int>> s;
-    int a = 0, a_total=0;
-    vector<int> area;
-    scanf("%s", land);
-    int n = strlen(land);
+    stack<pair<int, int> > s;
+    int sum = 0;
+    char ch;
 
-    for(int i=0; i<n; i++){
-        if(land[i] == '\\'){
-            depth.push(i);
-        }else if(land[i] == '/'){
-            if(!depth.empty()){
-                int j = depth.top(); depth.pop();
-                int dist = i - j - 1;
-                int diff_a = (dist + dist + 2) / 2;
-                s.push(make_tuple(j, diff_a));
-                a += diff_a; 
-                a_total += diff_a;
-                if(depth.empty()){
-                    area.push_back(a);
-                    a = 0;
-                }
+    for(int i=0; cin >> ch; i++){
+        if(ch == '\\')depth.push(i);
+        else if(ch == '/' && depth.size()>0){
+            int j = depth.top(); depth.pop();
+            int a = i - j;
+            sum += a;
+            while(s.size()>0 && s.top().first > j){
+                a += s.top().second; s.pop();
             }
-        }
-        if (i==n-1 && a > 0){
-            area.push_back(a);
+            s.push(make_pair(j, a));
         }
     }
-    int area_total = 0;
-    int n_area = area.size();
-    cout << a_total << endl;
-    cout << n_area << " ";
-    for(int i=0; i<n_area; i++){
-        int b = area.at(i);
-        area_total += b;
-        cout << b;
-        if(i<n-1) cout << " ";
+
+    vector<int> ans;
+    while (s.size()>0){ans.push_back(s.top().second); s.pop();}
+    reverse(ans.begin(), ans.end());
+    cout << sum << endl;
+    cout << ans.size();
+    for(int i=0; i<ans.size(); i++){
+        cout << " ";
+        cout << ans.at(i);
     }
     cout << endl;
-    cout  << area_total << endl;
 }
