@@ -72,10 +72,10 @@ int main(){
     init();
     for (int i=0; i<n; i++){
         scanf("%s%d", com, &key);
-        if(com[0] == 'd'){ 
+        if(com[0] == 'i'){
             insert(key); np++; size++;
         }
-        else if(com[0] == 'i') {
+        else if(com[0] == 'd') {
             if(strlen(com) > 6){
                 if(com[6] ==  'F') deleteFirst();
                 else if(com[6] == 'L') deleteLast();
