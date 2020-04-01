@@ -58,6 +58,17 @@ void preorder(Node *u){
 int main(){
     int n, i, x;
     string com;
-    
+    scanf("%d", &n);
+    for(i=0; i<n; i++){
+        cin >> com;
+        if(com == "insert"){
+            scanf("%d", &x);
+            insert(x);
+        } else if (com == "print"){
+            inorder(root);
+            printf("\n");
+            preorder(root);
+            printf("\n");
+        }
+    }
 }
-
