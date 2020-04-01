@@ -1,40 +1,42 @@
-#include<stdio.h>
+#include<vector>
+#include<iostream>
+#include<algorithm>
+using namespace std;
 
-#define MAX 100
+int pos, n;
+vector<int> preOrder, inOrder, postOrder;
 
-struct Node {
-    int p;
-    int l;
-    int r;
-};
-
-Node T[MAX];
-int preOrder[MAX], inOrder[MAX], postOrder[MAX];
-int idx;
-
-void reconstruction(int left, int right, int root){
-    // leftTree = inOrder[:root];
-    // rightTree = inOrder[root+1:];
-
-    // leftTreeRoot;
-    // rightTreeRoot;
-
-    // T[idx] = {root, leftTreeRoot, rightTreeRoot};
-    // idx++;
-
-    // reconstruction(leftTree, leftTreeRoot);
-    // reconstruction(rightTree, rightTreeRoot);
-
+void rec(int l, int r){
+    if(l >=r ) return;
+    int root = preOrder.at(pos);
+    pos++;
+    int m = distance(inOrder.begin(), find(inOrder.begin(), inOrder.end(), root));
+    // cout << root << " " << l << " " << m << " " << r << endl;
+    rec(l, m);
+    rec(m+1, r);
+    postOrder.push_back(root);
 }
 
+void solve(){
+    pos = 0;
+    rec(0, preOrder.size());
+    for(int i = 0; i<n; i++){
+        if(i) cout << " ";
+        cout << postOrder.at(i);
+    }
+    cout << endl;
+}
 
 int main(){
-    int i, n, root;
-    scanf("%d", &n);
-    for (i=0; i<n; i++) scanf("%d", &preOrder[i]);
-    for (i=0; i<n; i++) scanf("%d", &inOrder[i]);
-
-    idx =0;
-    root = preOrder[0];
-
+    int i, t;
+    cin >> n;
+    for (i=0; i<n; i++){
+        cin >> t;
+        preOrder.push_back(t);
+    } 
+    for (i=0; i<n; i++){
+        cin >> t;
+        inOrder.push_back(t);
+    } 
+    solve();
 }
