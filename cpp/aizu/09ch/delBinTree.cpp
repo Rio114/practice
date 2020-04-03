@@ -48,13 +48,52 @@ Node *find(Node *x, int k){
     else return NIL;
 }
 
-void deleteNode(int k){
-    Node *x = find(root, k); 
-    if( x == NIL) return;
-    insert(x->left);
-    insert(x->right);
-
+Node *treeMinimum(Node *x){
+    while(x->left != NIL) x = x->left;
+    return x;
 }
+
+Node *treeSuccessor(Node *x){
+    if(x->right != NIL) return treeMinimum(x->right);
+    Node *y = x->parent;
+    while(y != NIL && x == y->right){
+        x = y;
+        y = y->right;
+    }
+}
+
+void treeDelete(Node *z){
+    Node *x, *y;
+    if(z->left ==NIL || z->right == NIL) y=z;
+    else y = treeSuccessor(z);
+
+    if(y->left != NIL){
+        x = y->left;
+    } else {
+        x = y->right;
+    }
+
+    if(x != NIL){
+        x->parent = y->parent;
+    }
+
+    if(y->parent == NIL){
+        root = x;
+    } else {
+        if(y == y->parent->left){
+            y->parent->left = x;
+        } else{
+            y->parent->right = x;
+        }
+    }
+
+    if(y != z){
+        z->key = y->key;
+    }
+
+    free(y);
+}
+
 
 void inorder(Node *u){
     if(u == NIL) return;
@@ -90,6 +129,9 @@ int main(){
             u = find(root, x);
             if (u != NIL) cout << "yes" << endl;
             else cout << "no" << endl;
+        } else if (com == "delete"){
+            scanf("%d", &x);
+            treeDelete(find(root, x));
         }
     }
 }
