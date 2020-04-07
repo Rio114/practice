@@ -12,9 +12,14 @@ int main(){
         cin >> str;
         vote[str] += 1;
     }
+    int max_vote = 0;
     for(auto iter = begin(vote); iter != end(vote); ++iter){
-        cout << iter->first << " " << iter->second << endl;
-
+        max_vote = max(iter->second, max_vote);
     }
 
+    for(auto iter = begin(vote); iter != end(vote); ++iter){
+        if(iter->second == max_vote){
+            cout << iter->first << endl;
+        }
+    }
 }
