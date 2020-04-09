@@ -3,8 +3,6 @@
 #include<list>
 using namespace std;
 
-#define MAX 1000
-
 bool isPrime(int n){
     int i, r, res;
     if(n==1) return false;
@@ -16,7 +14,6 @@ bool isPrime(int n){
         if(res == 0) return false;
     }
     return true;
-
 }
 
 int main(){
