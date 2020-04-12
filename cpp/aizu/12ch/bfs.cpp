@@ -1,5 +1,5 @@
 #include<iostream>
-#include<stack>
+#include<queue>
 using namespace std;
 
 static const int N=100;
@@ -8,34 +8,33 @@ static const int GRAY=1;
 static const int BLACK=2;
 
 int n, mat[N][N];
-int d[N], f[N], color[N];
-int t;
+int dist[N], color[N];
+queue<int> Q;
 
-void dfs_init(){
+void bfs_init(){
     for(int i=0; i<n; i++) color[i] = WHITE;
-    t = 0;
 }
 
-void dfs(int u){
+void bfs(int u){
+    Q.push(u);
     color[u] = GRAY;
-    t++;
-    d[u] += t;
-    for(int i=0; i<n; i++){
-        if(mat[u][i] == 1 && color[i] == WHITE){
-            dfs(i);
+    dist[u] = 0;
+    while(!Q.empty()){
+        Q.pop();
+        u = Q.front();
+        cout << u << endl;
+        for(int i=0; i<n; i++){
+            if(mat[u][i] == 1 && color[i] == WHITE){
+                Q.push(u);
+                color[u] = GRAY;
+                dist[i] = dist[u] + 1;
+            }
         }
-   }
-   t++;
-   f[u] += t;
-   color[u] = BLACK;
+        color[u] = BLACK;
+    }
 }
 
 int main(){
-    // int n=0, t=1;
-    // cout << n << " " << t << endl;
-    // n = t++;
-    // cout << n << " " << t << endl;
-
     cin >> n;
     for(int i=0; i<n; i++){
         for(int j=0; j<n; j++){
@@ -52,14 +51,11 @@ int main(){
         }
     }
 
-    dfs_init();
-
-    for(int i=0; i<n; i++) {
-        if(color[i] == WHITE) dfs(i);
-    }
+    bfs_init();
+    bfs(0);
 
     for(int i=0; i<n; i++){
-        cout << i+1 << " " << d[i] << " " << f[i] << endl;
+        cout << i+1 << " " << dist[i] << endl;
     }
 
 }
