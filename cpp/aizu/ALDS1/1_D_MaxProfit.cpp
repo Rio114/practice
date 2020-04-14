@@ -1,18 +1,18 @@
 #include<iostream>
-#include<vector>
 using namespace std;
 
-
-
+static const int RMAX = 1000000000;
 
 int main(){
-    int n;
-    vector<int> a;
+    int n, r, rprev, rmin=RMAX, pmax=-RMAX;
     cin >> n;
-    for(int i=0; i<n; i++){
-        int b;
-        cin >>  b;
-        a.push_back(b);
+    cin >> r;
+    for(int i=1; i<n; i++){
+        rprev = r;
+        cin >> r;
+        rmin = min(rmin, rprev);
+        pmax = max(pmax, r - rmin);
     }
 
+    cout << pmax << endl;
 }
