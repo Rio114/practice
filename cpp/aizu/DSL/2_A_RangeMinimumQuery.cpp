@@ -30,7 +30,7 @@ int main(){
     int n, q;
     cin >> n >> q;
     N = 1;
-    while(N < n) N *= 2;
+    while(N < n+1) N *= 2;
 
     for(int i=0; i<2*N-1; i++){
         value.push_back(INF);
