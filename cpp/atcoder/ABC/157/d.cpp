@@ -1,12 +1,16 @@
 #include<iostream>
 #include<vector>
+#include<queue>
 using namespace std;
 typedef long long llong;
 
-static const int NMAX = 100000;
+static const int NMAX = 100001;
 // static const int MMAX = 100000;
 // static const int KMAX = 100000;
 static const int NIL = -1;
+// static const int WHITE = 0;
+// static const int GRAY = 1;
+// static const int BLACK = 2;
 
 int N, Idx;
 int Color[NMAX];
@@ -21,6 +25,23 @@ void dfs(int u, int c){
         }
    }
 }
+
+
+// void bfs(int u, int c){
+//     queue<int> Q;
+//     Q.push(u);
+//     Color[u] = c;
+//     while(!Q.empty()){
+//         u = Q.front(); Q.pop();
+//         for(int i=0; i<F[u].size(); i++){
+//             if(Color[F[u].at(i)] == NIL){
+//                 Q.push(F[u].at(i));
+//                 Color[F[u].at(i)] = c;
+//             }
+//         }
+//     }
+// }
+
 
 void assign(){
     Idx=1;
@@ -60,8 +81,7 @@ int main(){
         }
     }
 
-
-    for(int i=1; i<=Idx; i++) Cnt[i] = 0;
+    for(int i=1; i<=N; i++) Cnt[i] = 0;
     for(int i=1; i<=N; i++){
         Cnt[Color[i]]++;
     }
