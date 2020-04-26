@@ -1,7 +1,7 @@
 #!/bin/bash
 
-docker run -it -v ~/Documents/git/practice/opencv_cpp:/opencv e1e41d83f837 bash
+# docker run -it -v ~/Documents/git/practice/opencv_cpp:/opencv 17685f682a24 bash
 
-# docker start kind_kilby
-# docker attach kind_kilby 
+docker start thirsty_borg
+docker attach thirsty_borg 
 
