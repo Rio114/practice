@@ -11,7 +11,7 @@ int main(){
     for(int i=0; i<n; i++){
         cin >> str;
         if(get.count(str)) get.insert(make_pair(str, 1));
-        else get.at(str)++;
+        else get[str]++;
     }
 
     cout << get.size() << endl;
