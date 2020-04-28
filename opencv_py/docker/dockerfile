@@ -1,14 +1,17 @@
-FROM python:3.6
+FROM tensorflow/tensorflow:latest-gpu-jupyter
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 # opencv-devのインストール
-RUN apt-get update -y && apt-get install -y libopencv-dev \
+RUN apt-get update -y && apt-get install -y \ 
+    libopencv-dev apt-utils python3-pip\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # TensorflowとOpencvのインストール
 RUN pip3 install numpy tensorflow-gpu opencv-python
 
-ENV APP_NAME tensor-docker
+ENV APP_NAME tf_opencv
 WORKDIR /home/$APP_NAME
 
 CMD [ '/bin/bash'  ]
