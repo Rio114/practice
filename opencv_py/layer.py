@@ -1,93 +1,96 @@
 from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, Input, Dense
 from keras.layers import Flatten, Reshape, Activation, Concatenate, Dropout, BatchNormalization
+from keras.optimizers import Adam
 
 class UNET():
     def __init__(self, input_shape=(240, 426, 3), tgt_shape=(720, 1278, 3)):
         self.input_shape = input_shape
         self.tgt_shape = tgt_shape
-        
+
+        self.gen_net = []
+        self.dis_net = []
+        self.res_net = []
+
         self.generator = self.build_generator()
         self.discriminator = self.build_discriminator()
         self.combined = self.build_combined()
         self.optimizer = Adam(lr=0.0002, beta_1=0.5)
 
-        self.combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-        self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-        self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        # self.combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        # self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        # self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
 
-
-    def down(self, input_layer, filters, layer_name, pool=True):
-        conv = Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv', activation='relu')(input_layer)
-        res = Conv2D(filters, (3, 3), padding='same', name=layer_name+'_res', activation='relu')(conv)
-        if pool:
-            max_pool = MaxPooling2D(name=layer_name+'_pool',)(res)
-            return max_pool, res
-        else:
-            return res
-
-    def up_res(self, input_layer, residual, filters, layer_name):
-        filters= int(filters)
-        upsample = UpSampling2D(name=layer_name+'_upsamp')(input_layer)
-        upconv = Conv2D(filters, kernel_size=(2, 2), name=layer_name+'_upconv', padding="same")(upsample)
-        concat = Concatenate(axis=3)([residual, upconv])
-        conv1 = Conv2D(filters, (3, 3), padding='same',  name=layer_name+'_conv1', activation='relu')(concat)    
-        conv2 = Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv2', activation='relu')(conv1)
-        return conv2
-    
-    # def up_only(self, input_layer, filters, layer_name):
-    #     filters= int(filters)
-    #     upsample = UpSampling2D(name=layer_name+'_upsamp')(input_layer)
-    #     upconv = Conv2D(filters, kernel_size=(2, 2), name=layer_name+'_upconv', padding="same")(upsample)
-    #     conv1 = Conv2D(filters, (3, 3), padding='same',  name=layer_name+'_conv1', activation='relu')(upconv)    
-    #     conv2 = Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv2', activation='relu')(conv1)
-    #     return conv2
-
-    def build_generator(self, num_filter=64):
+    def build_generator(self, filters=64):
         input_layer = Input(shape = self.input_shape)
         layers = [input_layer]
-        residuals = []
 
-        # Down 1, 64
-        down1, res1 = self.down(input_layer, num_filter, layer_name='GD1')
-        residuals.append(res1)
-        num_filter *= 2
-
-        # Down 2, 8
-        down2 = self.down(down1, num_filter, layer_name='GD2', pool=False)
-
-        # Up 1, 128
-        num_filter /= 2
-        up1 = self.up_res(down2, residual=residuals[-1], layer_name='GU1', filters=num_filter)
-
-        # Up 2, 64
-        num_filter /= 2
-        up2 = UpSampling2D(size=(3,3), name='GU2_upsamp')(up1)
-        outR = Conv2D(filters=1, kernel_size=(1, 1), activation="sigmoid", name='GoutR')(up2)
-        outG = Conv2D(filters=1, kernel_size=(1, 1), activation="sigmoid", name='GoutG')(up2)
-        outB = Conv2D(filters=1, kernel_size=(1, 1), activation="sigmoid", name='GoutB')(up2)
-        out  = Concatenate(axis=3)([outR, outG, outB])
-        
-        model = Model(input_layer, out)
-
-        return model
-
-    def build_discriminator(self, num_filter=16):
-        inputs = Input(shape=self.tgt_shape)
-
-        tensors = [inputs]
         # Down 1
-        down1, _ = self.down(inputs, num_filter, layer_name='DD1')
-        num_filter *= 2
-
+        layer_name = 'GD0'
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv', activation='relu')) #0, 1
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_res', activation='relu')) #1, 2
+        self.gen_net.append(MaxPooling2D(name=layer_name+'_pool')) #2, 3
+        filters *= 2
+    
         # Down 2
-        down2, _ = self.down(down1, num_filter, layer_name='DD2')
-        num_filter *= 2
+        layer_name = 'GD1'
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv', activation='relu')) #3, 4
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_res', activation='relu')) #4, 5
+        filters *= 2
 
-        model = Model(input_layer, out)
+        # Up 1
+        layer_name = 'GU0'
+        filter = int(filters / 2)
+        self.gen_net.append(UpSampling2D(name=layer_name+'_upsamp')) #5
+        self.gen_net.append(Conv2D(filters, kernel_size=(2, 2), name=layer_name+'_upconv', padding="same")) #6
+        ## concat res
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same',  name=layer_name+'_conv1', activation='relu')) #7    
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv2', activation='relu')) #8
+    
+        # Up 2
+        filter = int(filters / 2)
+        layer_name = 'GU1'
+        self.gen_net.append(UpSampling2D(size=(3,3), name=layer_name+'_upsamp')) #9
+        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutR', activation="sigmoid")) #10
+        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutG', activation="sigmoid")) #11
+        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutB', activation="sigmoid")) #12
+        
+        for i, l in enumerate(self.gen_net[:7]):
+            layers.append(l(layers[i]))
 
+        layers.append(Concatenate(axis=3)([layers[2], layers[-1]]))
+        
+        for i, l in enumerate(self.gen_net[7:10]):
+            layers.append(l(layers[i+7]))
+
+        layers.append(self.gen_net[10](layers[-1]))
+        layers.append(self.gen_net[11](layers[-2]))
+        layers.append(self.gen_net[12](layers[-3]))
+
+        layers.append(Concatenate(axis=3)([layers[-3], layers[-2], layers[-1]]))
+
+        return Model(layers[0], layers[-1])
+
+    def build_discriminator(self, filters=16):
+        input_layer = Input(shape=self.tgt_shape)
+        layers = [input_layer]
+        # Down 1
+        layer_name = 'DD0'
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu')) #0, 1
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1', activation='relu')) #1, 2
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool')) #2, 3
+        filters *= 2
+    
+        # Down 2
+        layer_name = 'DD1'
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu')) #3, 4
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1', activation='relu')) #4, 5
+        
+        for i, l in enumerate(self.dis_net):
+            layers.append(l(layers[i]))
+
+        model = Model(layers[0], layers[-1])
         return model
-
 
     def set_combine_trainable(self):
         for l in self.discriminator.layers:
@@ -98,19 +101,32 @@ class UNET():
             l.trainable = False
 
     def build_combined(self):
-        inputs = Input(shape=self.input_shape)
-        tensors = [inputs]
+        input_layer = Input(shape=self.input_shape)
+        layers = [input_layer]
 
         self.num_gen = len(self.generator.layers)
         self.num_disc = len(self.discriminator.layers)
 
-        for i, l in enumerate(self.generator.layers):
-            tensors.append(l(tensors[i]))
+        for i, l in enumerate(self.gen_net[:7]):
+            layers.append(l(layers[i]))
 
-        for i, l in enumerate(self.discriminator.layers):
-            tensors.append(l(tensors[i+self.num_gen]))
+        layers.append(Concatenate(axis=3)([layers[2], layers[-1]]))
+        
+        for i, l in enumerate(self.gen_net[7:10]):
+            layers.append(l(layers[i+7]))
 
-        return Model(tensors[0], tensors[-1])
+        layers.append(self.gen_net[10](layers[-1]))
+        layers.append(self.gen_net[11](layers[-2]))
+        layers.append(self.gen_net[12](layers[-3]))
+
+        layers.append(Concatenate(axis=3)([layers[-3], layers[-2], layers[-1]]))
+
+        temp_num = len(layers)
+
+        for i, l in enumerate(self.dis_net):
+            layers.append(l(layers[i+temp_num-1]))
+
+        return Model(layers[0], layers[-1])
 
     def train(self, X_train, epochs, batch_size=128):
         half_batch = int(batch_size / 2)
