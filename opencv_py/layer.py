@@ -17,9 +17,9 @@ class UNET():
         self.combined = self.build_combined()
         self.optimizer = Adam(lr=0.0002, beta_1=0.5)
 
-        # self.combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-        # self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-        # self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
 
     def build_generator(self, filters=64):
         input_layer = Input(shape = self.input_shape)
@@ -74,17 +74,34 @@ class UNET():
     def build_discriminator(self, filters=16):
         input_layer = Input(shape=self.tgt_shape)
         layers = [input_layer]
-        # Down 1
+        
+        # Down 0
         layer_name = 'DD0'
-        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu')) #0, 1
-        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1', activation='relu')) #1, 2
-        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool')) #2, 3
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu'))
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1', activation='relu'))
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))#2, 3
         filters *= 2
     
-        # Down 2
+        # Down 1
         layer_name = 'DD1'
-        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu')) #3, 4
-        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1', activation='relu')) #4, 5
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu'))
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1', activation='relu'))
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))#2, 3
+        filters *= 2
+        
+        # Down 2
+        layer_name = 'DD2'
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu'))
+        self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1', activation='relu'))
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))#2, 3
+        filters *= 2
+
+        self.dis_net.append(Dropout(0.25))
+        self.dis_net.append(Flatten())
+        self.disc_net.append(BatchNormalization(momentum=0.8))
+        self.dis_net.append(Dense(128, activation='sigmoid'))
+        self.dis_net.append(Dense(64, activation='sigmoid'))
+        self.dis_net.append(Dense(1, activation='sigmoid'))
         
         for i, l in enumerate(self.dis_net):
             layers.append(l(layers[i]))
@@ -128,29 +145,24 @@ class UNET():
 
         return Model(layers[0], layers[-1])
 
-    def train(self, X_train, epochs, batch_size=128):
+    def train(self, X_low, X_high, epochs, batch_size=128):
         half_batch = int(batch_size / 2)
-        X_train = (X_train.astype(np.float32) - 127.5) / 127.5
 
-        for epoch in range(epochs):
-            idx = np.random.randint(0, X_train.shape[0], half_batch)
-            imgs = X_train[idx]
-            noise = np.random.uniform(-1, 1, (half_batch, 1, self.z_dim))
+        imgs_low = X_low
+        imgs_high = X_high
 
-            # -----------------
-            # Training Discriminator
-            # -----------------
-            self.set_combine_trainable()
-            gen_imgs = self.generator.predict(noise)
-            d_loss_real = self.discriminator.train_on_batch(imgs, np.ones((half_batch, 1)))
-            d_loss_fake = self.discriminator.train_on_batch(gen_imgs, np.zeros((half_batch, 1)))
-            d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+        # -----------------
+        # Training Discriminator
+        # -----------------
+        self.set_combine_trainable()
+        d_loss_real = self.discriminator.train_on_batch(imgs_high, np.ones((half_batch, 1)))
+        gen_imgs = self.generator.predict(imgs_low)
+        d_loss_fake = self.discriminator.train_on_batch(gen_imgs, np.zeros((half_batch, 1)))
+        d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
-            # -----------------
-            # Training Generator
-            # -----------------
-            self.unset_combine_trainable()
-            noise = np.random.uniform(-1, 1, (batch_size, 1, self.z_dim))
-            g_loss = self.combined.train_on_batch(noise, np.ones((batch_size, 1)))
+        # -----------------
+        # Training Generator
+        # -----------------
+        self.unset_combine_trainable()
+        g_loss = self.combined.train_on_batch(imgs_low, np.ones((batch_size, 1)))
 
-            print("Epoch:%d" % epoch)
