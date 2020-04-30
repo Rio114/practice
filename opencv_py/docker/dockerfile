@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:latest-gpu-jupyter
+FROM tensorflow/tensorflow:latest-gpu-py3-jupyter
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -9,7 +9,7 @@ RUN apt-get update -y && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # TensorflowとOpencvのインストール
-RUN pip3 install numpy tensorflow-gpu opencv-python
+RUN pip3 install opencv-python
 
 ENV APP_NAME tf_opencv
 WORKDIR /home/$APP_NAME
