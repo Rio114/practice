@@ -8,13 +8,35 @@ from tensorlayer.models import Model, load_model
 from keras_applications import vgg16
 
 class SRGA():
-    def __init__():
+    def __init__(self, input_shape=(240, 426, 3), tgt_shape=(720, 1278, 3)):
+        self.input_shape = input_shape
+        self.tgt_shape = tgt_shape
+
+        self.gen_net = []
+        self.dis_net = []
+        self.res_net = []
+
+        self.generator = self.build_generator()
+        self.discriminator = self.build_discriminator()
+        self.combined = self.build_combined()
+        self.optimizer = Adam(lr=0.0002, beta_1=0.5)
+
+        self.combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+
 
     def build_generator():
         # return model
 
     def build_discriminator():
         # return model
+
+    def build_vgg16(self, vgg_path):
+        model = load_model(vgg_path)
+        for l in model.layers:
+            l.trainable = False
+        return model
 
     def vgg_loss(self, ):
         # return loss
@@ -31,17 +53,10 @@ class SRGA():
 # def huber_loss_mean(y_true, y_pred, clip_delta=1.0):
 #   return tf.keras.backend.mean(huber_loss(y_true, y_pred, clip_delta))
 
-    def build_vgg16(self, vgg_path):
-        model = load_model(vgg_path)
-        for l in model.layers:
-            l.trainable = False
-        return model
-
 
 
 def build_generator():
 
-de
 
 def get_G(input_shape):
     w_init = tf.random_normal_initializer(stddev=0.02)

@@ -109,6 +109,17 @@ class UNET():
         model = Model(layers[0], layers[-1])
         return model
 
+
+    def build_vgg16(self, vgg_path):
+        model = load_model(vgg_path)
+        for l in model.layers:
+            l.trainable = False
+        return model
+
+    def vgg_loss(self, ):
+        # return loss
+
+
     def set_combine_trainable(self):
         for l in self.discriminator.layers:
             l.trainable = True
