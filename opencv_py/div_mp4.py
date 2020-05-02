@@ -8,7 +8,7 @@ def main():
     args = parser.parse_args()
     path = args.video_path
 
-    output_path = path.split('.')[0] + '_r.mp4'
+    output_path = path.split('.')[0] + '_r.mp4v'
 
     # read video
     cap = cv2.VideoCapture(path) # 引数がファイルパス
@@ -24,7 +24,7 @@ def main():
     print('frame_rate:',  fps)
 
     # Set output video infomation.
-    fourcc = cv2.VideoWriter_fourcc('D', 'I','V','3')
+    fourcc = cv2.VideoWriter_fourcc('M', 'P','4','V')
     vw = cv2.VideoWriter(output_path, fourcc, fps, (width, height), True)
 
     # Make the output video.
