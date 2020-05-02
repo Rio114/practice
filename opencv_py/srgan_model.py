@@ -1,8 +1,47 @@
 import tensorflow as tf
 import tensorlayer as tl
 from tensorlayer.layers import Input, Conv2d, BatchNorm2d, Elementwise
- from tensorlayer.layers import SubpixelConv2d, Flatten, Dense
-from tensorlayer.models import Model
+from tensorlayer.layers import SubpixelConv2d, Flatten, Dense
+from tensorlayer.models import Model, load_model
+
+
+from keras_applications import vgg16
+
+class SRGA():
+    def __init__():
+
+    def build_generator():
+        # return model
+
+    def build_discriminator():
+        # return model
+
+    def vgg_loss(self, ):
+        # return loss
+    
+# def huber_loss(y_true, y_pred, clip_delta=1.0):
+#   error = y_true - y_pred
+#   cond  = tf.keras.backend.abs(error) < clip_delta
+
+#   squared_loss = 0.5 * tf.keras.backend.square(error)
+#   linear_loss  = clip_delta * (tf.keras.backend.abs(error) - 0.5 * clip_delta)
+
+#   return tf.where(cond, squared_loss, linear_loss)
+
+# def huber_loss_mean(y_true, y_pred, clip_delta=1.0):
+#   return tf.keras.backend.mean(huber_loss(y_true, y_pred, clip_delta))
+
+    def build_vgg16(self, vgg_path):
+        model = load_model(vgg_path)
+        for l in model.layers:
+            l.trainable = False
+        return model
+
+
+
+def build_generator():
+
+de
 
 def get_G(input_shape):
     w_init = tf.random_normal_initializer(stddev=0.02)
