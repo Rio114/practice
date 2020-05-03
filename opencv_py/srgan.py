@@ -2,11 +2,13 @@ from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, Input, Dense
 from keras.layers import Flatten, Reshape, Activation, Concatenate, Dropout, BatchNormalization
 from keras.optimizers import Adam
+import numpy as np
 
 class UNET():
-    def __init__(self, input_shape=(240, 426, 3), tgt_shape=(720, 1278, 3)):
+    def __init__(self, vgg_path, input_shape=(240, 426, 3), tgt_shape=(720, 1278, 3)):
         self.input_shape = input_shape
         self.tgt_shape = tgt_shape
+        self.vgg_path = vgg_path
 
         self.gen_net = []
         self.dis_net = []
@@ -14,58 +16,36 @@ class UNET():
 
         self.generator = self.build_generator()
         self.discriminator = self.build_discriminator()
-        self.combined = self.build_combined()
+        self.vgg = self.build_vgg(vgg_path)
+
+        self.dics_combined = self.build_disc_combined()
+        self.vgg_combined = self.build_vgg_combined()
         self.optimizer = Adam(lr=0.0002, beta_1=0.5)
 
-        self.combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.dics_combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-        self.generator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-
+        self.vgg_combined.compile(loss='mean_squared_error', optimizer=self.optimizer)
+        
     def build_generator(self, filters=64):
         input_layer = Input(shape = self.input_shape)
         layers = [input_layer]
 
-        # Down 1
-        layer_name = 'GD0'
-        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv', activation='relu')) #0, 1
-        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_res', activation='relu')) #1, 2
-        self.gen_net.append(MaxPooling2D(name=layer_name+'_pool')) #2, 3
-        filters *= 2
-    
-        # Down 2
-        layer_name = 'GD1'
-        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv', activation='relu')) #3, 4
-        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_res', activation='relu')) #4, 5
-        filters *= 2
-
-        # Up 1
-        layer_name = 'GU0'
-        filter = int(filters / 2)
-        self.gen_net.append(UpSampling2D(name=layer_name+'_upsamp')) #5
-        self.gen_net.append(Conv2D(filters, kernel_size=(2, 2), name=layer_name+'_upconv', padding="same")) #6
-        ## concat res
-        self.gen_net.append(Conv2D(filters, (3, 3), padding='same',  name=layer_name+'_conv1', activation='relu')) #7    
-        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv2', activation='relu')) #8
-    
-        # Up 2
-        filter = int(filters / 2)
+        # # Up 1
         layer_name = 'GU1'
-        self.gen_net.append(UpSampling2D(size=(3,3), name=layer_name+'_upsamp')) #9
-        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutR', activation="sigmoid")) #10
-        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutG', activation="sigmoid")) #11
-        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutB', activation="sigmoid")) #12
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same',  name=layer_name+'_conv1', activation='relu'))    
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv2', activation='relu'))
+    
+        self.gen_net.append(UpSampling2D(size=(3,3), name=layer_name+'_upsamp'))
+        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutR', activation="sigmoid"))
+        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutG', activation="sigmoid"))
+        self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutB', activation="sigmoid"))
         
-        for i, l in enumerate(self.gen_net[:7]):
+        for i, l in enumerate(self.gen_net[:3]):
             layers.append(l(layers[i]))
 
-        layers.append(Concatenate(axis=3)([layers[2], layers[-1]]))
-        
-        for i, l in enumerate(self.gen_net[7:10]):
-            layers.append(l(layers[i+7]))
-
-        layers.append(self.gen_net[10](layers[-1]))
-        layers.append(self.gen_net[11](layers[-2]))
-        layers.append(self.gen_net[12](layers[-3]))
+        layers.append(self.gen_net[3](layers[-1]))
+        layers.append(self.gen_net[4](layers[-2]))
+        layers.append(self.gen_net[5](layers[-3]))
 
         layers.append(Concatenate(axis=3)([layers[-3], layers[-2], layers[-1]]))
 
@@ -98,7 +78,7 @@ class UNET():
 
         self.dis_net.append(Dropout(0.25))
         self.dis_net.append(Flatten())
-        self.disc_net.append(BatchNormalization(momentum=0.8))
+        self.dis_net.append(BatchNormalization(momentum=0.8))
         self.dis_net.append(Dense(128, activation='sigmoid'))
         self.dis_net.append(Dense(64, activation='sigmoid'))
         self.dis_net.append(Dense(1, activation='sigmoid'))
@@ -109,43 +89,26 @@ class UNET():
         model = Model(layers[0], layers[-1])
         return model
 
-
-    def build_vgg16(self, vgg_path):
-        model = load_model(vgg_path)
+    def build_vgg(self, vgg_path, l=10):
+        vgg = load_model(self.vgg_path)
+        model = Model(inputs=vgg.input, outputs=vgg.get_layer(vgg.layers[l].name).output)
         for l in model.layers:
             l.trainable = False
         return model
 
-    def vgg_loss(self, ):
-        # return loss
-
-
-    def set_combine_trainable(self):
-        for l in self.discriminator.layers:
-            l.trainable = True
-
-    def unset_combine_trainable(self):
-        for l in self.discriminator.layers:
-            l.trainable = False
-
-    def build_combined(self):
+    def build_disc_combined(self):
         input_layer = Input(shape=self.input_shape)
         layers = [input_layer]
 
         self.num_gen = len(self.generator.layers)
         self.num_disc = len(self.discriminator.layers)
 
-        for i, l in enumerate(self.gen_net[:7]):
+        for i, l in enumerate(self.gen_net[:3]):
             layers.append(l(layers[i]))
 
-        layers.append(Concatenate(axis=3)([layers[2], layers[-1]]))
-        
-        for i, l in enumerate(self.gen_net[7:10]):
-            layers.append(l(layers[i+7]))
-
-        layers.append(self.gen_net[10](layers[-1]))
-        layers.append(self.gen_net[11](layers[-2]))
-        layers.append(self.gen_net[12](layers[-3]))
+        layers.append(self.gen_net[3](layers[-1]))
+        layers.append(self.gen_net[4](layers[-2]))
+        layers.append(self.gen_net[5](layers[-3]))
 
         layers.append(Concatenate(axis=3)([layers[-3], layers[-2], layers[-1]]))
 
@@ -156,24 +119,47 @@ class UNET():
 
         return Model(layers[0], layers[-1])
 
+    def build_vgg_combined(self):
+        input_layer = Input(shape=self.input_shape)
+        layers = [input_layer]
+
+        self.num_gen = len(self.generator.layers)
+        self.num_disc = len(self.discriminator.layers)
+
+        for i, l in enumerate(self.gen_net[:3]):
+            layers.append(l(layers[i]))
+
+        layers.append(self.gen_net[3](layers[-1]))
+        layers.append(self.gen_net[4](layers[-2]))
+        layers.append(self.gen_net[5](layers[-3]))
+
+        layers.append(Concatenate(axis=3)([layers[-3], layers[-2], layers[-1]]))
+
+        temp_num = len(layers)
+
+        self.vgg.layers
+
+        for i, l in enumerate(self.vgg.layers):
+            layers.append(l(layers[i+temp_num-1]))
+
+        return Model(layers[0], layers[-1])
+
     def train(self, X_low, X_high, epochs, batch_size=128):
         half_batch = int(batch_size / 2)
-
+        idx = np.random.randint(0, X_low.shape[0], half_batch)
         imgs_low = X_low
         imgs_high = X_high
 
         # -----------------
         # Training Discriminator
         # -----------------
-        self.set_combine_trainable()
         d_loss_real = self.discriminator.train_on_batch(imgs_high, np.ones((half_batch, 1)))
-        gen_imgs = self.generator.predict(imgs_low)
-        d_loss_fake = self.discriminator.train_on_batch(gen_imgs, np.zeros((half_batch, 1)))
+        d_loss_fake = self.dics_combined.train_on_batch(imgs_low[idx], np.ones((half_batch, 0)))
         d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
         # -----------------
         # Training Generator
         # -----------------
-        self.unset_combine_trainable()
-        g_loss = self.combined.train_on_batch(imgs_low, np.ones((batch_size, 1)))
+        vgg_map_low = self.vgg_combined.train_on_bath(img_low, self.vgg.predict(imgs_high))
+        g_loss = self.vgg_loss(vgg_map_low, vgg_map_high)
 
