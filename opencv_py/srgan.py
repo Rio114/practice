@@ -18,11 +18,11 @@ class SRGAN():
         self.discriminator = self.build_discriminator()
         self.vgg = self.build_vgg(vgg_path)
 
-        self.dics_combined = self.build_disc_combined()
+        self.disc_combined = self.build_disc_combined()
         self.vgg_combined = self.build_vgg_combined()
         self.optimizer = Adam(lr=0.0002, beta_1=0.5)
 
-        self.dics_combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        self.disc_combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         self.vgg_combined.compile(loss='mean_squared_error', optimizer=self.optimizer)
         
@@ -35,7 +35,7 @@ class SRGAN():
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same',  name=layer_name+'_conv1', activation='relu'))    
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv2', activation='relu'))
     
-        self.gen_net.append(UpSampling2D(size=(3,3), name=layer_name+'_upsamp'))
+        self.gen_net.append(UpSampling2D(size=(4,4), name=layer_name+'_upsamp'))
         self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutR', activation="sigmoid"))
         self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutG', activation="sigmoid"))
         self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutB', activation="sigmoid"))
@@ -144,22 +144,24 @@ class SRGAN():
 
         return Model(layers[0], layers[-1])
 
-    def train(self, X_low, X_high, epochs, batch_size=128):
-        half_batch = int(batch_size / 2)
-        idx = np.random.randint(0, X_low.shape[0], half_batch)
+    def train(self, X_low, X_high, batch_size=16):
         imgs_low = X_low
         imgs_high = X_high
 
         # -----------------
         # Training Discriminator
         # -----------------
-        d_loss_real = self.discriminator.train_on_batch(imgs_high, np.ones((half_batch, 1)))
-        d_loss_fake = self.dics_combined.train_on_batch(imgs_low[idx], np.ones((half_batch, 0)))
-        d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+        # print('training discriminator (true)...')
+        # d_loss_real = self.discriminator.train_on_batch(imgs_high, np.ones((batch_size, 1)))
+        # print('training discriminator (false)...')
+        # d_loss_fake = self.disc_combined.train_on_batch(imgs_low, np.zeros((batch_size, 1)))
+        # d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
         # -----------------
         # Training Generator
         # -----------------
-        vgg_map_low = self.vgg_combined.train_on_bath(img_low, self.vgg.predict(imgs_high))
+        print('training generator...')
+        hr_map = self.vgg.predict(imgs_high)
+        vgg_map_low = self.vgg_combined.train_on_bath(img_low, hr_map)
         g_loss = self.vgg_loss(vgg_map_low, vgg_map_high)
 

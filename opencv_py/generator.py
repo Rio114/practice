@@ -1,8 +1,7 @@
 import os
 import numpy as np
-from PIL import Image
+import cv2
 import random
-
 
 class ImageDataGenerator(object):
     def __init__(self, input_dir, tgt_dir):
@@ -17,14 +16,16 @@ class ImageDataGenerator(object):
         self.targets = []
 
     def flow_from_directory(self, batch_size=16):
-        train_imges = random.sample(self.img_list, batch_size)
         while True:
+            X_list = []
+            Y_list = []
+            train_imges = random.sample(self.img_list, batch_size)
             for img in train_imges:
-                input_path = input_dir + img
-                tgt_path = tgt_dir + img
+                input_path = self.input_dir + img
+                tgt_path = self.tgt_dir + img
 
-                X = (np.array(Image.open(input_path)) - 127.5) / 127.5
-                Y = (np.array(Image.open(tgt_path)) - 127.5) / 127.5
+                X = (np.array(cv2.imread(input_path) - 127.5)) / 127.5
+                Y = (np.array(cv2.imread(tgt_path) - 127.5)) / 127.5
 
                 X_list.append(X.reshape([1, X.shape[0], X.shape[1], X.shape[2]]))
                 Y_list.append(Y.reshape([1, Y.shape[0], Y.shape[1], Y.shape[2]]))
