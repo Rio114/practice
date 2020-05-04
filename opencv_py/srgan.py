@@ -151,17 +151,17 @@ class SRGAN():
         # -----------------
         # Training Discriminator
         # -----------------
-        # print('training discriminator (true)...')
-        # d_loss_real = self.discriminator.train_on_batch(imgs_high, np.ones((batch_size, 1)))
+        print('training discriminator (true)...')
+        d_loss_real = self.discriminator.train_on_batch(imgs_high, np.ones((batch_size, 1)))
         # print('training discriminator (false)...')
         # d_loss_fake = self.disc_combined.train_on_batch(imgs_low, np.zeros((batch_size, 1)))
         # d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
-        # -----------------
-        # Training Generator
-        # -----------------
-        print('training generator...')
-        hr_map = self.vgg.predict(imgs_high)
-        vgg_map_low = self.vgg_combined.train_on_bath(img_low, hr_map)
-        g_loss = self.vgg_loss(vgg_map_low, vgg_map_high)
+        # # -----------------
+        # # Training Generator
+        # # -----------------
+        # print('training generator...')
+        # hr_map = self.vgg.predict(imgs_high)
+        # vgg_map_low = self.vgg_combined.train_on_bath(img_low, hr_map)
+        # g_loss = self.vgg_loss(vgg_map_low, vgg_map_high)
 
