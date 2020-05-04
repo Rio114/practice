@@ -5,8 +5,9 @@ from keras.optimizers import Adam
 import numpy as np
 
 class SRGAN():
-    def __init__(self, vgg_path, input_shape=(270, 480, 3), tgt_shape=(1080, 1920, 3)):
+    def __init__(self, vgg_path, batch_size, input_shape=(270, 480, 3), tgt_shape=(1080, 1920, 3)):
         self.input_shape = input_shape
+        self.batch_size = batch_size
         self.tgt_shape = tgt_shape
         self.vgg_path = vgg_path
 
@@ -144,24 +145,25 @@ class SRGAN():
 
         return Model(layers[0], layers[-1])
 
-    def train(self, X_low, X_high, batch_size=16):
+    def train(self, X_low, X_high):
+        batch_size = self.batch_size
         imgs_low = X_low
         imgs_high = X_high
 
         # -----------------
         # Training Discriminator
         # -----------------
-        print('training discriminator (true)...')
+        # print('training discriminator (true)...')
         d_loss_real = self.discriminator.train_on_batch(imgs_high, np.ones((batch_size, 1)))
         # print('training discriminator (false)...')
-        # d_loss_fake = self.disc_combined.train_on_batch(imgs_low, np.zeros((batch_size, 1)))
-        # d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+        d_loss_fake = self.disc_combined.train_on_batch(imgs_low, np.zeros((batch_size, 1)))
+        d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
-        # # -----------------
-        # # Training Generator
-        # # -----------------
+        # -----------------
+        # Training Generator
+        # -----------------
         # print('training generator...')
-        # hr_map = self.vgg.predict(imgs_high)
-        # vgg_map_low = self.vgg_combined.train_on_bath(img_low, hr_map)
-        # g_loss = self.vgg_loss(vgg_map_low, vgg_map_high)
+        hr_map = self.vgg.predict(imgs_high)
+        vgg_map_low = self.vgg_combined.train_on_batch(imgs_low, hr_map)
+        print('d_loss', d_loss)
 

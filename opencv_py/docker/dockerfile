@@ -8,7 +8,7 @@ RUN apt-get update -y && apt-get install -y \
 
 # TensorflowとOpencvのインストール
 RUN pip3 install --upgrade pip
-RUN pip3 install numpy==1.16.4 tensorflow-gpu==1.14.0 keras
+RUN pip3 install setuptools==41.0.0 tensorflow==2.0.0 keras jupyter
 
 ENV APP_NAME keras_opencv
 WORKDIR /home/$APP_NAME

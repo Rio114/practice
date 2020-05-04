@@ -4,9 +4,10 @@ import cv2
 import random
 
 class ImageDataGenerator(object):
-    def __init__(self, input_dir, tgt_dir):
+    def __init__(self, input_dir, tgt_dir, batch_size):
         self.input_dir = input_dir
         self.tgt_dir = tgt_dir
+        self.batch_size = batch_size
         self.img_list = os.listdir(input_dir)
         assert self.img_list == os.listdir(tgt_dir)
         self.reset()
@@ -15,7 +16,8 @@ class ImageDataGenerator(object):
         self.inputs = []
         self.targets = []
 
-    def flow_from_directory(self, batch_size=16):
+    def flow_from_directory(self):
+        batch_size = self.batch_size
         while True:
             X_list = []
             Y_list = []
