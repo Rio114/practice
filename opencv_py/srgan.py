@@ -1,11 +1,11 @@
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, Input, Dense
 from keras.layers import Flatten, Reshape, Activation, Concatenate, Dropout, BatchNormalization
 from keras.optimizers import Adam
 import numpy as np
 
-class UNET():
-    def __init__(self, vgg_path, input_shape=(240, 426, 3), tgt_shape=(720, 1278, 3)):
+class SRGAN():
+    def __init__(self, vgg_path, input_shape=(270, 480, 3), tgt_shape=(1080, 1920, 3)):
         self.input_shape = input_shape
         self.tgt_shape = tgt_shape
         self.vgg_path = vgg_path
