@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.0-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-devel-ubuntu18.04
 
 # opencv-devのインストール
 RUN apt-get update -y && apt-get install -y \ 
@@ -8,8 +8,8 @@ RUN apt-get update -y && apt-get install -y \
 
 # TensorflowとOpencvのインストール
 RUN pip3 install --upgrade pip
-RUN pip3 install setuptools==41.0.0 tensorflow==2.0.0 keras jupyter
+RUN pip3 install setuptools==41.0.0 tensorflow==2.1.0 keras jupyter
 
-ENV APP_NAME keras_opencv
+ENV APP_NAME tf2_opencv
 WORKDIR /home/$APP_NAME
 
