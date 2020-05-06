@@ -11,3 +11,7 @@ chmod 755 NVIDIA-Linux-x86_64-430.64.run
 wget http://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run
 chmod 755 cuda_10.1.243_418.87.00_linux.run
 ./cuda_10.1.243_418.87.00_linux.run
+
+# input below into ./bashrc
+# export PATH="/usr/local/cuda/bin:$PATH"
+# export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
