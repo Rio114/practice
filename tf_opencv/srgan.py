@@ -1,7 +1,8 @@
 from keras.models import Model, load_model
 from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, Input, Dense
 from keras.layers import Flatten, Reshape, Activation, Concatenate, Dropout, BatchNormalization
-from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
+
 import numpy as np
 
 class SRGAN():
