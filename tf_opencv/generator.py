@@ -26,13 +26,16 @@ class ImageDataGenerator(object):
                 input_path = self.input_dir + img
                 tgt_path = self.tgt_dir + img
 
-                X = (np.array(cv2.imread(input_path) - 127.5)) / 127.5
-                Y = (np.array(cv2.imread(tgt_path) - 127.5)) / 127.5
+                X = np.array(cv2.imread(input_path), dtype='u1') 
+                Y = np.array(cv2.imread(tgt_path), dtype='u1')
 
                 X_list.append(X.reshape([1, X.shape[0], X.shape[1], X.shape[2]]))
                 Y_list.append(Y.reshape([1, Y.shape[0], Y.shape[1], Y.shape[2]]))
     
-            inputs = np.vstack(X_list)
+            inputs  = np.vstack(X_list)
+            inputs  = ((inputs - 127.5)/ 127.5).astype('f4')
+
             targets = np.vstack(Y_list)
+            targets  = ((targets - 127.5)/ 127.5).astype('f4')
 
             yield inputs, targets
