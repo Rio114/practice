@@ -15,4 +15,7 @@ curl -s -L https://nvidia.github.io/nvidia-container-runtime/gpgkey | \
 
 apt-get install nvidia-container-runtime
 
+# apt-get install nvidia-docker2
+# pkill -SIGHUP dockerd
+
 # reboot
