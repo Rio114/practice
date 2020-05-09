@@ -21,21 +21,24 @@ class ImageDataGenerator(object):
         while True:
             X_list = []
             Y_list = []
-            train_imges = random.sample(self.img_list, batch_size)
-            for img in train_imges:
-                input_path = self.input_dir + img
-                tgt_path = self.tgt_dir + img
+            num = len(self.img_list)
+            imges = random.sample(self.img_list, num)
+            for i in range(num // batch_size - 1):
+                train_imges = imges[i*batch_size:(i+1)*batch_size]
+                for img in train_imges:
+                    input_path = self.input_dir + img
+                    tgt_path = self.tgt_dir + img
 
-                X = np.array(cv2.imread(input_path), dtype='u1') 
-                Y = np.array(cv2.imread(tgt_path), dtype='u1')
+                    X = np.array(cv2.imread(input_path), dtype='u1') 
+                    Y = np.array(cv2.imread(tgt_path), dtype='u1')
 
-                X_list.append(X.reshape([1, X.shape[0], X.shape[1], X.shape[2]]))
-                Y_list.append(Y.reshape([1, Y.shape[0], Y.shape[1], Y.shape[2]]))
-    
-            inputs  = np.vstack(X_list)
-            inputs  = ((inputs - 127.5)/ 127.5).astype('f4')
+                    X_list.append(X.reshape([1, X.shape[0], X.shape[1], X.shape[2]]))
+                    Y_list.append(Y.reshape([1, Y.shape[0], Y.shape[1], Y.shape[2]]))
+        
+                inputs  = np.vstack(X_list)
+                inputs  = ((inputs - 127.5)/ 127.5).astype('f4')
 
-            targets = np.vstack(Y_list)
-            targets  = ((targets - 127.5)/ 127.5).astype('f4')
+                targets = np.vstack(Y_list)
+                targets  = ((targets - 127.5)/ 127.5).astype('f4')
 
-            yield inputs, targets
+                yield inputs, targets
