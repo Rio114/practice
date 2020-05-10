@@ -2,6 +2,7 @@ from keras.models import Model, load_model
 from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, Input, Dense, Add, Activation
 from keras.layers import Flatten, Reshape, Activation, Concatenate, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import Adam
+from keras.engine.network import Network
 
 import numpy as np
 
@@ -56,8 +57,8 @@ class SRGAN():
         layer_name = 'G_Body_0' # 1~6
         self.add_conv_gen(layer_name, filters)   
 
-        # layer_name = 'G_Body_1' # 7~12
-        # self.add_conv_gen(layer_name, filters)
+        layer_name = 'G_Body_1' # 7~12
+        self.add_conv_gen(layer_name, filters)
 
         layer_name = "G_Up_1" # 13
         self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
@@ -65,8 +66,8 @@ class SRGAN():
         layer_name = 'G_Body_2' # 14~19
         self.add_conv_gen(layer_name, filters)
 
-        # layer_name = 'G_Body_3' # 20~25
-        # self.add_conv_gen(layer_name, filters)
+        layer_name = 'G_Body_3' # 20~25
+        self.add_conv_gen(layer_name, filters)
 
         layer_name = "G_Up_2" # 26
         self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
@@ -93,41 +94,41 @@ class SRGAN():
         layers.append(Add()([operator(layers[-1]), head_out]))
         body_0_out = layers[-1]
 
-        # num = len(layers)
-        # for i, operator in enumerate(self.gen_net[7:12]):
-        #     layers.append(operator(layers[i+num-1]))
-        # operator = self.gen_net[12]
-        # layers.append(Add()([operator(layers[-1]), body_0_out]))
-        # body_1_out = layers[-1]
+        num = len(layers)
+        for i, operator in enumerate(self.gen_net[7:12]):
+            layers.append(operator(layers[i+num-1]))
+        operator = self.gen_net[12]
+        layers.append(Add()([operator(layers[-1]), body_0_out]))
+        body_1_out = layers[-1]
 
-        # layers.append(Add()(([head_out, body_1_out])))
-        layers.append(self.gen_net[7](layers[-1]))
+        layers.append(Add()(([head_out, body_1_out])))
+        layers.append(self.gen_net[13](layers[-1]))
 
         # body second up
         num = len(layers)
         prior_up_2 = layers[-1]
-        for i, operator in enumerate(self.gen_net[8:13]):
+        for i, operator in enumerate(self.gen_net[14:19]):
             layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[13]
+        operator = self.gen_net[19]
         layers.append(Add()([operator(layers[-1]), prior_up_2]))
         body_2_out = layers[-1]
 
-        # num = len(layers)
-        # for i, operator in enumerate(self.gen_net[20:25]):
-        #     layers.append(operator(layers[i+num-1]))
-        # operator = self.gen_net[25]
-        # layers.append(Add()([operator(layers[-1]), body_2_out]))
-        # body_3_out = layers[-1]
+        num = len(layers)
+        for i, operator in enumerate(self.gen_net[20:25]):
+            layers.append(operator(layers[i+num-1]))
+        operator = self.gen_net[25]
+        layers.append(Add()([operator(layers[-1]), body_2_out]))
+        body_3_out = layers[-1]
 
-        # layers.append(Add()(([prior_up_2, body_3_out])))
-        layers.append(self.gen_net[14](layers[-1]))
+        layers.append(Add()(([prior_up_2, body_3_out])))
+        layers.append(self.gen_net[26](layers[-1]))
 
         # tail
         num = len(layers)
         prior_rgb = layers[-1]
-        for i, operator in enumerate(self.gen_net[15:20]):
+        for i, operator in enumerate(self.gen_net[27:32]):
             layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[20]
+        operator = self.gen_net[32]
         layers.append(Add()([operator(layers[-1]), prior_rgb]))
 
         prior_up = layers[-1]
@@ -137,7 +138,7 @@ class SRGAN():
         layers.append(self.gen_net[-1](layers[-3]))
 
         layers.append(Concatenate(axis=3)([layers[-3], layers[-2], layers[-1]]))
-
+        self.shared_generator = Network(input=layers[0], output=layers[-1], name='generator')
         return Model(layers[0], layers[-1])
 
     def build_discriminator(self, filters=32):
@@ -174,88 +175,30 @@ class SRGAN():
         for i, l in enumerate(self.dis_net):
             layers.append(l(layers[i]))
 
+        self.shared_discriminator = Network(input=layers[0], output=layers[-1], name='discriminator')
         model = Model(layers[0], layers[-1])
         return model
 
     def build_vgg(self, vgg_path, l=10):
         vgg = load_model(self.vgg_path)
-        model = Model(inputs=vgg.input, outputs=vgg.get_layer(vgg.layers[l].name).output)
+        self.shared_vgg = Network(inputs=vgg.input, outputs=vgg.get_layer(vgg.layers[l].name).output, name='vgg')
+        input_layer = Input(shape=self.tgt_shape)
+        out = self.shared_vgg(input_layer)
+        model = Model(input_layer, out)
         for l in model.layers:
             l.trainable = False
         return model
 
     def build_disc_combined(self):
         input_layer = Input(shape=self.input_shape)
-        layers = [input_layer]
 
         self.num_gen = len(self.generator.layers)
         self.num_disc = len(self.discriminator.layers)
 
- # build network
-        # head
-        operator = self.gen_net[0]
-        layers.append(operator(layers[0]))
-        head_out = layers[-1] 
+        gen = self.shared_generator(input_layer)
+        out = self.shared_discriminator(gen)
 
-        # body first up
-        num = len(layers)
-        for i, operator in enumerate(self.gen_net[1:6]):
-            layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[6]
-        layers.append(Add()([operator(layers[-1]), head_out]))
-        body_0_out = layers[-1]
-
-        # num = len(layers)
-        # for i, operator in enumerate(self.gen_net[7:12]):
-        #     layers.append(operator(layers[i+num-1]))
-        # operator = self.gen_net[12]
-        # layers.append(Add()([operator(layers[-1]), body_0_out]))
-        # body_1_out = layers[-1]
-
-        # layers.append(Add()(([head_out, body_1_out])))
-        layers.append(self.gen_net[7](layers[-1]))
-
-        # body second up
-        num = len(layers)
-        prior_up_2 = layers[-1]
-        for i, operator in enumerate(self.gen_net[8:13]):
-            layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[13]
-        layers.append(Add()([operator(layers[-1]), prior_up_2]))
-        body_2_out = layers[-1]
-
-        # num = len(layers)
-        # for i, operator in enumerate(self.gen_net[20:25]):
-        #     layers.append(operator(layers[i+num-1]))
-        # operator = self.gen_net[25]
-        # layers.append(Add()([operator(layers[-1]), body_2_out]))
-        # body_3_out = layers[-1]
-
-        # layers.append(Add()(([prior_up_2, body_3_out])))
-        layers.append(self.gen_net[14](layers[-1]))
-
-        # tail
-        num = len(layers)
-        prior_rgb = layers[-1]
-        for i, operator in enumerate(self.gen_net[15:20]):
-            layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[20]
-        layers.append(Add()([operator(layers[-1]), prior_rgb]))
-
-        prior_up = layers[-1]
-        layers.append(self.gen_net[-4](prior_up))
-        layers.append(self.gen_net[-3](layers[-1]))
-        layers.append(self.gen_net[-2](layers[-2]))
-        layers.append(self.gen_net[-1](layers[-3]))
-
-        layers.append(Concatenate(axis=3)([layers[-3], layers[-2], layers[-1]]))
-
-        temp_num = len(layers)
-
-        for i, l in enumerate(self.dis_net):
-            layers.append(l(layers[i+temp_num-1]))
-
-        return Model(layers[0], layers[-1])
+        return Model(input_layer, out)
 
     def build_vgg_combined(self):
         input_layer = Input(shape=self.input_shape)
@@ -264,71 +207,10 @@ class SRGAN():
         self.num_gen = len(self.generator.layers)
         self.num_disc = len(self.discriminator.layers)
 
- # build network
-        # head
-        operator = self.gen_net[0]
-        layers.append(operator(layers[0]))
-        head_out = layers[-1] 
+        gen = self.shared_generator(input_layer)
+        out = self.shared_vgg(gen)
 
-        # body first up
-        num = len(layers)
-        for i, operator in enumerate(self.gen_net[1:6]):
-            layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[6]
-        layers.append(Add()([operator(layers[-1]), head_out]))
-        body_0_out = layers[-1]
-
-        # num = len(layers)
-        # for i, operator in enumerate(self.gen_net[7:12]):
-        #     layers.append(operator(layers[i+num-1]))
-        # operator = self.gen_net[12]
-        # layers.append(Add()([operator(layers[-1]), body_0_out]))
-        # body_1_out = layers[-1]
-
-        # layers.append(Add()(([head_out, body_1_out])))
-        layers.append(self.gen_net[7](layers[-1]))
-
-        # body second up
-        num = len(layers)
-        prior_up_2 = layers[-1]
-        for i, operator in enumerate(self.gen_net[8:13]):
-            layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[13]
-        layers.append(Add()([operator(layers[-1]), prior_up_2]))
-        body_2_out = layers[-1]
-
-        # num = len(layers)
-        # for i, operator in enumerate(self.gen_net[20:25]):
-        #     layers.append(operator(layers[i+num-1]))
-        # operator = self.gen_net[25]
-        # layers.append(Add()([operator(layers[-1]), body_2_out]))
-        # body_3_out = layers[-1]
-
-        # layers.append(Add()(([prior_up_2, body_3_out])))
-        layers.append(self.gen_net[14](layers[-1]))
-
-        # tail
-        num = len(layers)
-        prior_rgb = layers[-1]
-        for i, operator in enumerate(self.gen_net[15:20]):
-            layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[20]
-        layers.append(Add()([operator(layers[-1]), prior_rgb]))
-
-        prior_up = layers[-1]
-        layers.append(self.gen_net[-4](prior_up))
-        layers.append(self.gen_net[-3](layers[-1]))
-        layers.append(self.gen_net[-2](layers[-2]))
-        layers.append(self.gen_net[-1](layers[-3]))
-
-        layers.append(Concatenate(axis=3)([layers[-3], layers[-2], layers[-1]]))
-
-        temp_num = len(layers)
-
-        for i, l in enumerate(self.vgg.layers):
-            layers.append(l(layers[i+temp_num-1]))
-
-        return Model(layers[0], layers[-1])
+        return Model(input_layer, out)
 
     def train(self, X_low, X_high):
         batch_size = self.batch_size
@@ -346,5 +228,26 @@ class SRGAN():
         # -----------------
         hr_map = self.vgg.predict(imgs_high)
         vgg_loss = self.vgg_combined.train_on_batch(imgs_low, hr_map)
+
+        # print(f'd_loss_real:{d_loss_real}, d_loss_fake:{d_loss_fake}, vgg_loss:{vgg_loss}')
+
+    def valid(self, X_low, X_high):
+        batch_size = self.batch_size
+        imgs_low = X_low
+        imgs_high = X_high
+
+        # -----------------
+        # Training Discriminator
+        # -----------------
+        d_loss_real = self.discriminator.test_on_batch(imgs_high, np.ones((batch_size, 1)))
+        d_loss_fake = self.disc_combined.test_on_batch(imgs_low, np.zeros((batch_size, 1)))
+
+        # -----------------
+        # Training Generator
+        # -----------------
+        hr_map = self.vgg.predict(imgs_high)
+        vgg_loss = self.vgg_combined.test_on_batch(imgs_low, hr_map)
+        
         print(f'd_loss_real:{d_loss_real}, d_loss_fake:{d_loss_fake}, vgg_loss:{vgg_loss}')
+
 
