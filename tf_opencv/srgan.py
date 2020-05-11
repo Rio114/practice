@@ -179,9 +179,9 @@ class SRGAN():
         model = Model(layers[0], layers[-1])
         return model
 
-    def build_vgg(self, vgg_path, l=10):
+    def build_vgg(self, vgg_path, loss_layer=11):
         vgg = load_model(self.vgg_path)
-        self.shared_vgg = Network(inputs=vgg.input, outputs=vgg.get_layer(vgg.layers[l].name).output, name='vgg')
+        self.shared_vgg = Network(inputs=vgg.input, outputs=vgg.get_layer(vgg.layers[loss_layer].name).output, name='vgg')
         input_layer = Input(shape=self.tgt_shape)
         out = self.shared_vgg(input_layer)
         model = Model(input_layer, out)
