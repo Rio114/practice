@@ -1,5 +1,5 @@
 from keras.models import Model, load_model
-from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, Input, Dense, Add, Activation, PReLU
+from keras.layers import Conv2D, MaxPooling2D, UpSampling2D, Input, Dense, Add, Activation, LeakyReLU
 from keras.layers import Flatten, Reshape, Activation, Concatenate, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import Adam
 from keras.engine.network import Network
@@ -33,18 +33,18 @@ class SRGAN():
     def __add_conv_gen(self, layer_name, filters):
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0'))
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
-        self.gen_net.append(PReLU(name=layer_name+'_act0'))
+        self.gen_net.append(LeakyReLU(name=layer_name+'_act0'))
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1'))
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm1'))
-        self.gen_net.append(PReLU(name=layer_name+'_act1'))
+        self.gen_net.append(LeakyReLU(name=layer_name+'_act1'))
 
     def __add_conv_disc(self, layer_name, filters):
         self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0'))
         self.dis_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
-        self.gen_net.append(PReLU(name=layer_name+'_act0'))
+        self.gen_net.append(LeakyReLU(name=layer_name+'_act0'))
         self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1'))
         self.dis_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm1'))
-        self.gen_net.append(PReLU(name=layer_name+'_act1'))
+        self.gen_net.append(LeakyReLU(name=layer_name+'_act1'))
 
     def build_generator(self, filters=32):
         input_layer = Input(shape = self.input_shape)
@@ -53,7 +53,7 @@ class SRGAN():
         # define operators
         layer_name = 'G_Head' # 0~1
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu'))    
-        self.gen_net.append(PReLU(name=layer_name+'_act0'))
+        self.gen_net.append(LeakyReLU(name=layer_name+'_act0'))
 
         layer_name = 'G_Body_0' # 2~7
         self.__add_conv_gen(layer_name, filters)   
@@ -64,12 +64,15 @@ class SRGAN():
         layer_name = "G_Up_1" # 14
         self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
 
-        layer_name = 'G_Body_2' # 15~19
+        layer_name = 'G_Body_2' # 15~22
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0'))
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
-        self.gen_net.append(PReLU(name=layer_name+'_act0'))
+        self.gen_net.append(LeakyReLU(name=layer_name+'_act0'))
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv1'))
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm1'))
+        self.gen_net.append(LeakyReLU(name=layer_name+'_act1'))
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv2'))
+        self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm2'))
 
         layer_name = "G_Tail"
         self.gen_net.append(Conv2D(filters=3, kernel_size=(3, 3), padding='same', name='outRGB', activation="sigmoid"))
@@ -104,7 +107,7 @@ class SRGAN():
         # tail
         prior_tail = layers[-1]
         num = len(layers)
-        for i, operator in enumerate(self.gen_net[15:20]):
+        for i, operator in enumerate(self.gen_net[15:23]):
             layers.append(operator(layers[i+num-1]))
         tail_0_out = layers[-1]
 
@@ -126,12 +129,12 @@ class SRGAN():
         # Down 1
         layer_name = 'DD1'
         self.__add_conv_disc(layer_name, filters)   
-        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))     
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
 
         self.dis_net.append(Dropout(0.25))
         self.dis_net.append(Flatten())
         self.dis_net.append(BatchNormalization(momentum=0.8))
-        self.dis_net.append(Dense(128, activation='sigmoid'))
+        self.dis_net.append(Dense(64, activation='sigmoid'))
         self.dis_net.append(Dense(64, activation='sigmoid'))
         self.dis_net.append(Dense(1, activation='sigmoid'))
         
