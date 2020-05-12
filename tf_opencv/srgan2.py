@@ -30,7 +30,7 @@ class SRGAN():
         self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         self.vgg_combined.compile(loss='mean_squared_error', optimizer=self.optimizer)
     
-    def add_conv_gen(self, layer_name, filters):
+    def __add_conv_gen(self, layer_name, filters):
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0'))
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
         self.gen_net.append(Activation(activation='relu', name=layer_name+'_act0'))
@@ -38,7 +38,7 @@ class SRGAN():
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm1'))
         self.gen_net.append(Activation(activation='relu', name=layer_name+'_act1'))
 
-    def add_conv_disc(self, layer_name, filters):
+    def __add_conv_disc(self, layer_name, filters):
         self.dis_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0'))
         self.dis_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
         self.dis_net.append(Activation(activation='relu', name=layer_name+'_act0'))
@@ -55,25 +55,31 @@ class SRGAN():
         self.gen_net.append(Conv2D(filters, (9, 9), padding='same', name=layer_name+'_conv0', activation='relu'))    
         
         layer_name = 'G_Body_0' # 1~6
-        self.add_conv_gen(layer_name, filters)   
+        self.__add_conv_gen(layer_name, filters)   
 
         layer_name = 'G_Body_1' # 7~12
-        self.add_conv_gen(layer_name, filters)
+        self.__add_conv_gen(layer_name, filters)
 
-        layer_name = "G_Up_1" # 13
+        layer_name = 'G_Body_2' # 13~18
+        self.__add_conv_gen(layer_name, filters)
+
+        layer_name = "G_Up_1" # 19
         self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
 
         # layer_name = 'G_Body_2' # 14~19
-        # self.add_conv_gen(layer_name, filters)
+        # self.__add_conv_gen(layer_name, filters)
 
         # layer_name = 'G_Body_3' # 20~25
-        # self.add_conv_gen(layer_name, filters)
+        # self.__add_conv_gen(layer_name, filters)
 
         # layer_name = "G_Up_2" # 26
         # self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
+        
+        layer_name = 'G_Body_3' # 20~25
+        self.__add_conv_gen(layer_name, filters)
 
-        layer_name = 'G_Body_4' # 27~32
-        self.add_conv_gen(layer_name, filters)
+        layer_name = 'G_Body_4' # 26~31
+        self.__add_conv_gen(layer_name, filters)
 
         layer_name = "G_Tail"
         self.gen_net.append(Conv2D(filters=1, kernel_size=(3, 3), padding='same', name='GoutR', activation="sigmoid"))
@@ -101,35 +107,34 @@ class SRGAN():
         layers.append(Add()([operator(layers[-1]), body_0_out]))
         body_1_out = layers[-1]
 
-        layers.append(Add()(([head_out, body_1_out])))
-        layers.append(self.gen_net[13](layers[-1]))
+        num = len(layers)
+        for i, operator in enumerate(self.gen_net[13:18]):
+            layers.append(operator(layers[i+num-1]))
+        operator = self.gen_net[18]
+        layers.append(Add()([operator(layers[-1]), body_1_out]))
+        body_2_out = layers[-1]
 
-        # # body second up
-        # num = len(layers)
-        # prior_up_2 = layers[-1]
-        # for i, operator in enumerate(self.gen_net[14:19]):
-        #     layers.append(operator(layers[i+num-1]))
-        # operator = self.gen_net[19]
-        # layers.append(Add()([operator(layers[-1]), prior_up_2]))
-        # body_2_out = layers[-1]
-
-        # num = len(layers)
-        # for i, operator in enumerate(self.gen_net[20:25]):
-        #     layers.append(operator(layers[i+num-1]))
-        # operator = self.gen_net[25]
-        # layers.append(Add()([operator(layers[-1]), body_2_out]))
-        # body_3_out = layers[-1]
-
-        # layers.append(Add()(([prior_up_2, body_3_out])))
-        # layers.append(self.gen_net[26](layers[-1]))
+        layers.append(Add()(([head_out, body_2_out])))
+        layers.append(self.gen_net[19](layers[-1]))
 
         # tail
         num = len(layers)
         prior_rgb = layers[-1]
-        for i, operator in enumerate(self.gen_net[14:19]):
+        for i, operator in enumerate(self.gen_net[20:25]):
             layers.append(operator(layers[i+num-1]))
-        operator = self.gen_net[19]
+        operator = self.gen_net[25]
         layers.append(Add()([operator(layers[-1]), prior_rgb]))
+        tail_0_out = layers[-1]
+
+
+        num = len(layers)
+        for i, operator in enumerate(self.gen_net[26:31]):
+            layers.append(operator(layers[i+num-1]))
+        operator = self.gen_net[31]
+        layers.append(Add()([operator(layers[-1]), tail_0_out]))
+        tail_1_out = layers[-1]
+
+        layers.append(Add()(([prior_rgb, tail_1_out])))
 
         prior_up = layers[-1]
         layers.append(self.gen_net[-4](prior_up))
@@ -147,22 +152,22 @@ class SRGAN():
         
         # Down 0
         layer_name = 'DD0'
-        self.add_conv_disc(layer_name, filters)   
+        self.__add_conv_disc(layer_name, filters)   
         self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))        
     
         # Down 1
         layer_name = 'DD1'
-        self.add_conv_disc(layer_name, filters)   
+        self.__add_conv_disc(layer_name, filters)   
         self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))        
         
         # Down 2
         layer_name = 'DD2'
-        self.add_conv_disc(layer_name, filters)   
+        self.__add_conv_disc(layer_name, filters)   
         self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
 
         # Down 3
         layer_name = 'DD3'
-        self.add_conv_disc(layer_name, filters)   
+        self.__add_conv_disc(layer_name, filters)   
         self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))       
 
         self.dis_net.append(Dropout(0.25))
