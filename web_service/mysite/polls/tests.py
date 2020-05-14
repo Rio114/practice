@@ -6,9 +6,12 @@ from django.urls import reverse
 
 from .models import Question
 
-def create_question(question_text, days):
+def create_question(question_text, days, choice_text=None):
     time = timezone.now() + datetime.timedelta(days=days)
-    return Question.objects.create(question_text=question_text, pub_date=time)
+    obj = Question.objects.create(question_text=question_text, pub_date=time)
+    if choice_text != None:
+        obj.choice_set.create(choice_text=choice_text)    
+    return obj
     
 class QuestionModelTests(TestCase):
     def test_was_published_recently_with_future_question(self):
@@ -72,4 +75,10 @@ class QuestionDetailViewTests(TestCase):
         url = reverse('polls:detail', args=(past_question.id, ))
         response = self.client.get(url)
         self.assertContains(response, past_question.question_text)
-        
+
+    def test_no_choice(self):
+        question = create_question(question_text='Qustion without choice',
+        days=0)
+        url = reverse('polls:detail', args=(question.id, ))
+        response = self.client.get(url)
+        self.assertContains(response, "No choice in this question.")    
