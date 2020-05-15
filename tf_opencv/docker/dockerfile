@@ -1,7 +1,7 @@
 FROM tensorflow/tensorflow:latest-gpu-py3
 
 RUN pip install --upgrade pip
-RUN pip install keras jupyter
+RUN pip install keras jupyter responder peewee
 
 ENV APP_NAME keras
 WORKDIR /home/$APP_NAME
