@@ -28,19 +28,22 @@ class GEN():
         layers = [input_layer]
         
         # define operators
-        layer_name = 'G_Head' # 0~1
+        layer_name = 'G_Head' # 0~2
         self.gen_net.append(Conv2D(filters, (9, 9), padding='same', name=layer_name+'_conv0', activation='relu'))    
+        self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
         self.gen_net.append(LeakyReLU(name=layer_name+'_act0'))
 
-        layer_name = 'G_Body_0' # 2~7
+        layer_name = 'G_Body_0' # 3~8
         self.__add_conv_gen(layer_name, filters)   
 
-        layer_name = "G_Up_1" # 8
+        layer_name = 'G_Body_1' # 9~14
+        self.__add_conv_gen(layer_name, filters)    
+
+        layer_name = "G_Up_1" # 15
         self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
         
-        layer_name = 'G_Body_1' # 9~15
+        layer_name = 'G_Body_2' # 16~21
         self.__add_conv_gen(layer_name, filters)
-        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv_add'))
 
         layer_name = "G_Tail"
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
@@ -48,34 +51,38 @@ class GEN():
         
         # build network
         # head
-        operator = self.gen_net[0]
-        layers.append(operator(layers[0]))
-
-        operator = self.gen_net[1]
-        layers.append(operator(layers[1]))
+        num = len(layers)
+        for i, operator in enumerate(self.gen_net[:3]):
+            layers.append(operator(layers[i+num-1]))
         head_out = layers[-1] 
 
-        # body first up
+        # body first 0
         num = len(layers)
-        for i, operator in enumerate(self.gen_net[2:8]):
+        for i, operator in enumerate(self.gen_net[3:9]):
             layers.append(operator(layers[i+num-1]))
         layers.append(Add()([layers[-1], head_out]))
+        body_0_out = layers[-1]
+
+        # body second 1
+        num = len(layers)
+        for i, operator in enumerate(self.gen_net[9:15]):
+            layers.append(operator(layers[i+num-1]))
+        layers.append(Add()([layers[-1], body_0_out]))
+        body_1_out = layers[-1]
+        layers.append(Add()([head_out, body_1_out]))
 
         # up
-        layers.append(self.gen_net[8](layers[-1]))
+        layers.append(self.gen_net[15](layers[-1]))
 
         # tail
         prior_tail = layers[-1]
         num = len(layers)
-        for i, operator in enumerate(self.gen_net[9:16]):
+        for i, operator in enumerate(self.gen_net[16:22]):
             layers.append(operator(layers[i+num-1]))
-        
-        tail_0_out = layers[-1]
-        layers.append(Add()(([prior_tail, tail_0_out])))
+        layers.append(Add()([layers[-1], prior_tail]))
 
         layers.append(self.gen_net[-2](layers[-1])) # batch_norm
         layers.append(self.gen_net[-1](layers[-1])) # rgb
 
         self.shared_generator = Network(input=layers[0], output=layers[-1], name='generator')
         return Model(layers[0], layers[-1])
-

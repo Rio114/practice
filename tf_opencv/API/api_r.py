@@ -30,6 +30,8 @@ def get_image(res, resp, *, imagePath):
             }
         }    
     
+    # run_sr_generator
+
     except Images.DoesNotExist:
         result = {
             "result": False
@@ -40,7 +42,6 @@ def get_image(res, resp, *, imagePath):
 
 # @api.route('/sendImage', methods=['POST'])
 # def send_image():
-#     print('hogeeeeeeeeeeeeeeeeeeeeeeeeee')
 #     imagePath = request.data.decode()
 #     height, width, channel = check_image(imagePath)
 

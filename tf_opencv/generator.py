@@ -36,9 +36,9 @@ class ImageDataGenerator(object):
                     Y_list.append(Y.reshape([1, Y.shape[0], Y.shape[1], Y.shape[2]]))
         
                 inputs  = np.vstack(X_list)
-                inputs  = ((inputs - 127.5)/ 127.5).astype('f4')
+                inputs  = (inputs / 255.0).astype('f4')
 
                 targets = np.vstack(Y_list)
-                targets  = ((targets - 127.5)/ 127.5).astype('f4')
+                targets  = (targets / 255.0).astype('f4')
 
                 yield inputs, targets
