@@ -40,38 +40,5 @@ def get_image(res, resp, *, imagePath):
 
     resp.media = result
 
-# @api.route('/sendImage', methods=['POST'])
-# def send_image():
-#     imagePath = request.data.decode()
-#     height, width, channel = check_image(imagePath)
-
-#     rev_path = imagePath.split('.')[0] + '_rev.jpg'
-#     result = {
-#         "result": True,
-#         "data": {
-#             "imagePath": imagePath,
-#             "imageWidth": width,
-#             "imageHeight": height,
-#             "imageRevPath": rev_path
-#         }
-#     }
-
-#     Images.create(imagePath=imagePath,
-#             imageWidth=width,
-#             imageHeigh=height,
-#             imageRevPath=rev_path)
-
-#     return make_response(jsonify(result))
-
-# def check_image(req):
-#     path = req
-#     print(path)
-#     img = cv2.imread(path)
-#     shape = img.shape
-#     h = shape[0]
-#     w = shape[1]
-#     c = shape[2]
-#     return h, w, c
-
 if __name__ == '__main__':
     api.run(address="0.0.0.0", port=8888)
