@@ -5,3 +5,8 @@ RUN pip install django
 
 ENV APP_NAME web
 WORKDIR /home/web
+
+# # ユーザーを作成
+ARG UID=1000
+RUN useradd -m -u ${UID} docker
+
