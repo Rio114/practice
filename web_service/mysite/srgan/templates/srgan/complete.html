@@ -1,0 +1,9 @@
+{% extends "srgan/base.html" %}
+
+{% block title %}アップロード完了{% endblock title %}
+{% block content %}
+    <div align="center">
+        <h1 align="center">アップロード完了</h1>
+        <a href="{% url 'srgan:form' %}"><button>戻る</button></a>
+    </div>
+{% endblock content %}

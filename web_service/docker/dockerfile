@@ -1,7 +1,7 @@
 FROM python:latest
 
 RUN pip install --upgrade pip
-RUN pip install django
+RUN pip install django pillow
 
 ENV APP_NAME web
 WORKDIR /home/web
