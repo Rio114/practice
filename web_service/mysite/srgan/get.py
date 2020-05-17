@@ -7,7 +7,6 @@ DATA_DIR = 'data/'
 
 def get_image(image_file):
     url = URL + image_file
-    print(url)
     try:
         with urllib.request.urlopen(url) as response:
             body = json.loads(response.read())

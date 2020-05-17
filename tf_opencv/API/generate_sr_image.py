@@ -66,8 +66,8 @@ def main():
     args = parser.parse_args()
     image_file = args.image_file
     
-    obj = sr_image(image_file, DATA_DIR)
-    obj.generate()
+    obj = SrImage(DATA_DIR)
+    obj.generate(image_file)
 
 if __name__ == '__main__':
     main()

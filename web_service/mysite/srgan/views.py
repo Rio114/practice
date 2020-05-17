@@ -1,6 +1,5 @@
 import time
 import sys, os
-UPLOADE_DIR = os.path.dirname(os.path.abspath(__file__)) + '/static/files/'
 
 from django.views import generic
 from django.http import HttpResponse, HttpResponseRedirect
@@ -8,7 +7,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.template.context_processors import csrf
 from .models import FileNameModel
+from .get import get_image
 
+UPLOADE_DIR = os.path.dirname(os.path.abspath(__file__)) + '/static/files/'
 
 def form(request):
     if request.method != 'POST':
@@ -20,6 +21,8 @@ def form(request):
 
     for chunk in file.chunks():
         destination.write(chunk)
+
+    get_image(file.name)
 
     insert_data = FileNameModel(file_name = file.name)
     insert_data.save()
