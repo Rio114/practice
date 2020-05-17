@@ -2,7 +2,7 @@ import urllib.request
 import json
 import argparse
 
-URL = 'http://localhost:8888/getImage/'
+URL = 'http://172.18.0.2:8888/getImage/'
 DATA_DIR = 'data/'
 
 def get_image(image_file):
