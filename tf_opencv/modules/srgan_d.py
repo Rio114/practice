@@ -46,13 +46,13 @@ class SRGAN():
         self.dis_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm1'))
         self.gen_net.append(LeakyReLU(name=layer_name+'_act1'))
 
-    def build_generator(self, filters=32):
+    def build_generator(self, filters=128):
         input_layer = Input(shape = self.input_shape)
         layers = [input_layer]
         
         # define operators
         layer_name = 'G_Head' # 0~2
-        self.gen_net.append(Conv2D(filters, (9, 9), padding='same', name=layer_name+'_conv0', activation='relu'))    
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu'))    
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
         self.gen_net.append(LeakyReLU(name=layer_name+'_act0'))
 
@@ -65,10 +65,10 @@ class SRGAN():
         layer_name = "G_Up_1" # 15
         self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
         
-        layer_name = 'G_Body_2' # 16~21
+        layer_name = 'G_Body_3' # 16~21
         self.__add_conv_gen(layer_name, filters)
 
-        layer_name = "G_Tail"
+        layer_name = "G_Tail" # 22~23
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
         self.gen_net.append(Conv2D(filters=3, kernel_size=(3, 3), padding='same', name='outRGB', activation="sigmoid"))
         
@@ -86,12 +86,13 @@ class SRGAN():
         layers.append(Add()([layers[-1], head_out]))
         body_0_out = layers[-1]
 
-        # body second 1
+        # body first 1
         num = len(layers)
         for i, operator in enumerate(self.gen_net[9:15]):
             layers.append(operator(layers[i+num-1]))
         layers.append(Add()([layers[-1], body_0_out]))
         body_1_out = layers[-1]
+
         layers.append(Add()([head_out, body_1_out]))
 
         # up
@@ -110,7 +111,7 @@ class SRGAN():
         self.shared_generator = Network(input=layers[0], output=layers[-1], name='generator')
         return Model(layers[0], layers[-1])
 
-    def build_discriminator(self, filters=32):
+    def build_discriminator(self, filters=8):
         input_layer = Input(shape=self.tgt_shape)
         layers = [input_layer]
         
@@ -118,9 +119,22 @@ class SRGAN():
         layer_name = 'DD0' #0~7
         self.__add_conv_disc(layer_name, filters)
         self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))        
+        filters *= 2
 
         # Down 1
         layer_name = 'DD1' #8~13
+        self.__add_conv_disc(layer_name, filters)   
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
+        filters *= 2
+
+        # Down 2
+        layer_name = 'DD2' #8~13
+        self.__add_conv_disc(layer_name, filters)   
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
+        filters *= 2
+
+        # Down 3
+        layer_name = 'DD3' #8~13
         self.__add_conv_disc(layer_name, filters)   
         self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
 
