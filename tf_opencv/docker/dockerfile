@@ -1,14 +1,28 @@
 FROM tensorflow/tensorflow:latest-gpu-py3
 
 RUN pip install --upgrade pip
-RUN pip install keras jupyter responder peewee
+RUN pip install keras jupyter
 
-ENV APP_NAME gpu
-WORKDIR /home/$APP_NAME
+ENV APP_NAME keras-cv
+WORKDIR /home/work
 
 # # ユーザーを作成
 ARG UID=1000
 RUN useradd -m -u ${UID} docker
 
-# # # 作成したユーザーに切り替える
-# # USER ${UID}
+ENV DEBIAN_FRONTEND=noninteractive
+
+# tzdataのインストールで止めないようにするため
+RUN apt-get update && \
+    apt-get install -y git
+
+# opencv-devのインストール
+RUN apt-get update -y && \
+    apt-get install -y libopencv-dev && \
+    apt-get clean
+RUN rm -rf /var/lib/apt/lists/*
+RUN pip install opencv-python
+
+EXPOSE 8888
+
+CMD ["bash"]
