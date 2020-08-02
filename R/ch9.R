@@ -1,2 +1,3 @@
+library(rstan)
 
-fit <- stan("ch9.stan", data = d)
+fit <- stan("ch9.stan", data = input)
