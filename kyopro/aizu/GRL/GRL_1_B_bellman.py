@@ -20,42 +20,42 @@ def gen_w_adj_list(edges, N):
         
     return adj_list
 
-def bellman(N, start, adj_list):
+def bellman(N, start, edges):
+
     state = []
-    distance = []
+    dist = []
     for i in range(N):
         state.append(-1)
-        distance.append(INF)
+        dist.append(INF)
 
     state[start] = 0
-    distance[start] = 0
-    
-    while True:
-        min_cost = INF
-        u = -1
-        for i in range(N):
-            if state[i] != 1 and distance[i] < min_cost:
-                min_cost = distance[i]
-                u = i
-        
-        if u == -1:
-            break
-        
-        state[u] = 1
-        for t, d in adj_list[u]:
-            if state[t] != 1:
-                if distance[t] > distance[u] + d :
-                    distance[t] = distance[u] + d
-                    state[t] = 0
+    dist[start] = 0
+    cnt = 0
 
-    return distance
+    while True:
+        update = False
+        cnt += 1
+        if cnt > N:
+            return False
+
+        for s, t, d in edges:
+            if dist[s] != INF and dist[t] > dist[s] + d:
+                dist[t] = dist[s] + d
+                update = True
+        if update is False:
+            break
+
+    return dist
 
 def main():
     N, M, start, edges = read_data()
     adj_list = gen_w_adj_list(edges, N)
-    distance = bellman(N, start, adj_list)
-    for d in distance:
-        print(int(d) if d != INF else 'INF')
+    distance = bellman(N, start, edges)
+    if distance:
+        for d in distance:
+            print(int(d) if d != INF else 'INF')
+    else:
+        print("NEGATIVE CYCLE")
     
 if __name__ == "__main__":
     main()
