@@ -1,14 +1,14 @@
-import heapq
-import numpy as np
+
+INF = 1e+9
 
 def read_data():
-    N, M, s = map(int, input().split())
+    N, M, start = map(int, input().split())
     edges = []
     for m in range(M):
         s, t, w = map(int, input().split())
         edges.append([s, t, w])
     
-    return N, M, s, edges
+    return N, M, start, edges
 
 def gen_w_adj_list(edges, N):
     adj_list = []
@@ -20,10 +20,12 @@ def gen_w_adj_list(edges, N):
         
     return adj_list
 
-def dik(N, start, adj_list, INF=1e+9):
-    state = np.ones([N], dtype='int') * (-1)
-    distance = np.ones([N], dtype='int') * INF
-    parent = np.ones([N], dtype='int') * (-1)
+def bellman(N, start, adj_list):
+    state = []
+    distance = []
+    for i in range(N):
+        state.append(-1)
+        distance.append(INF)
 
     state[start] = 0
     distance[start] = 0
@@ -46,15 +48,14 @@ def dik(N, start, adj_list, INF=1e+9):
                     distance[t] = distance[u] + d
                     state[t] = 0
 
-    print(distance)
+    return distance
 
 def main():
     N, M, start, edges = read_data()
     adj_list = gen_w_adj_list(edges, N)
-
-    # print(adj_list)
+    distance = bellman(N, start, adj_list)
+    for d in distance:
+        print(int(d) if d != INF else 'INF')
     
-    dik(N, start, adj_list, INF=1000000000)
-
 if __name__ == "__main__":
     main()
