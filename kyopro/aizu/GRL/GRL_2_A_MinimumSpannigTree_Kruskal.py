@@ -1,69 +1,65 @@
-from heapq import heappop, heappush
+from heapq import heappop, heappush, heapify
 
 INF = 1e+10
+
+class UnionFind():
+    def __init__(self, n):
+        self.n = n
+        self.parents = [-1] * n
+
+    def find(self, x):
+        if self.parents[x] < 0:
+            return x
+        else:
+            self.parents[x] = self.find(self.parents[x])
+            return self.parents[x]
+
+    def union(self, x, y):
+        x = self.find(x)
+        y = self.find(y)
+
+        if x == y:
+            return
+
+        if self.parents[x] > self.parents[y]:
+            x, y = y, x
+
+        self.parents[x] += self.parents[y]
+        self.parents[y] = x
+
+    def same(self, x, y):
+        return self.find(x) == self.find(y)
 
 def read_data():
     N, M = map(int, input().split())
     edges = []
     for m in range(M):
         s, t, w = map(int, input().split())
-        edges.append([s, t, w])
+        edges.append([w, s, t])
     
     return N, M, edges
 
-def gen_w_adj_list(edges, N):
-    adj_list = []
-    for i in range(N):
-        adj_list.append([])
-    
-    for edge in edges:
-        adj_list[edge[0]].append([edge[2], edge[1]]) # edge : [distance, target]
-        adj_list[edge[1]].append([edge[2], edge[0]]) # edge : [distance, target]
-        
-    return adj_list
-
-def prim(N, start, adj_list):
-
-    states = []
-    dists = []
-    parents = []
-    for i in range(N):
-        states.append(-1)
-        dists.append(INF)
-        parents.append(-1)
-
-    states[start] = 0
-    dists[start] = 0
-
-    pq = [(0, start)]
+def kruskal(N, edges):
+    total_cost = 0
+    heapify(edges) # edges[(w, s, t)]
+    uf = UnionFind(N)
 
     while True:
         try:
-            u = heappop(pq)
+            w, s, t = heappop(edges)
         except:
             break
 
-        states[u[1]] = 1
+        if uf.same(s, t) == False:
+            total_cost += w
+            uf.union(s, t) 
 
-        for t, d in adj_list[u[1]]:
-            if states[t] != 1 and dists[t] > d:
-                dists[t] = d
-                parents[t] = u[1]
-                states[t] = 0
-                heappush(pq, (d, t))
-
-    return dists
+    return total_cost
 
 def main():
     N, M, edges = read_data()
-    adj_list = gen_w_adj_list(edges, N)
-    start = 0
-    dists = prim(N, start, adj_list)
-    print(dists)
-    dist_sum = 0
-    for i in dists:
-        dist_sum += int(i)
-    print(dist_sum)
+    total_cost = kruskal(N, edges)
+    print(total_cost)
     
 if __name__ == "__main__":
     main()
