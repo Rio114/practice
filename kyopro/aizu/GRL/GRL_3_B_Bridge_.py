@@ -19,7 +19,7 @@ def gen_adj_list(edges, V):
     return adj_list
 
 
-class ArticulationPoints():
+class Lowest():
     def __init__(self, adj_list, V, start=0):
         INF = 1e+10
         self.adj = adj_list
@@ -27,6 +27,7 @@ class ArticulationPoints():
         self.states = [-1 for _ in range(V)]
         self.prenum = [-1 for _ in range(V)]
         self.parents = [-1 for _ in range(V)]
+        self.bridges = set()
         self.lowest = [INF for _ in range(V)]
         self.start = start
         self.timer = 0
@@ -43,40 +44,27 @@ class ArticulationPoints():
                 self.parents[next_v] = current
 
                 self.__dfs(next_v, current)
+
+                if self.lowest[next_v] > self.prenum[current]:
+                    self.bridges.add((min(current, next_v), max(current, next_v)))
                 self.lowest[current] = min(self.lowest[current], self.lowest[next_v])
             elif next_v != prev:
                 self.lowest[current] = min(self.lowest[current], self.prenum[next_v])
-
     def show(self):
         print("prenum: ", self.prenum)
         print("lowest: ", self.lowest)
         print("parents: ", self.parents)
 
-    def find_ap(self):
-        start = 0
-        self.__dfs(start, -1)
-
-        ap = []
-        np = 0
-
-        for i in range(self.V):
-            p = self.parents[i]
-            if p == 0:
-                np += 1
-            elif self.prenum[p] <= self.lowest[i] and p > -1:
-                ap.append(p)
-        if np > 1:
-            ap.append(0)
-        ap = list(set(ap))
-        ap.sort()
-        for out in ap:
-            print(out)
+    def show_bridges(self):
+        self.__dfs(0, -1)
+        for b in sorted(self.bridges):
+            print(b[0], b[1])
 
 def main():
     V, E, Edges = read_data()
     adj_list = gen_adj_list(Edges, V)
-    AP = ArticulationPoints(adj_list, V)
-    AP.find_ap()
+    AP = Lowest(adj_list, V)
+    AP.show_bridges()
     # AP.show()
     
 if __name__ == "__main__":
