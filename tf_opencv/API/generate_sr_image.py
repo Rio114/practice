@@ -15,7 +15,7 @@ session = InteractiveSession(config=config)
 
 from gen_net import GEN
 
-MODEL_PATH = '../models/20200515_generator.h5'
+MODEL_PATH = '../models/20200522_generator.h5'
 DATA_DIR = 'data/'
 
 class SrImage():

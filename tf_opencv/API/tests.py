@@ -9,6 +9,11 @@ class TestStringMethods(unittest.TestCase):
         obj = SrImage()
         self.assertEqual(obj.generate(image_file), 'test_r.jpg')
 
+    # def test_png(self):
+    #     image_file = 'test.png'
+    #     obj = SrImage()
+    #     self.assertEqual(obj.generate(image_file), 'test_r.png')
+
     def test_txt(self):
         image_file = 'test.txt'
         obj = SrImage()

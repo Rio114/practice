@@ -25,10 +25,10 @@ class SRGAN():
         self.vgg_combined = self.build_vgg_combined()
         self.optimizer = Adam(lr=0.0002, beta_1=0.5)
 
-        self.generator.compile(loss='mean_squared_error', optimizer=self.optimizer)
+        self.generator.compile(loss='mean_absolute_error', optimizer=self.optimizer)
         self.disc_combined.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         self.discriminator.compile(loss='binary_crossentropy', optimizer=self.optimizer)
-        self.vgg_combined.compile(loss='mean_squared_error', optimizer=self.optimizer)
+        self.vgg_combined.compile(loss='mean_absolute_error', optimizer=self.optimizer)
 
     def __add_conv_gen(self, layer_name, filters):
         self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0'))
@@ -46,55 +46,64 @@ class SRGAN():
         self.dis_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm1'))
         self.gen_net.append(LeakyReLU(name=layer_name+'_act1'))
 
-    def build_generator(self, filters=32):
+    def build_generator(self, filters=128):
         input_layer = Input(shape = self.input_shape)
         layers = [input_layer]
-        
+
         # define operators
-        layer_name = 'G_Head' # 0~1
-        self.gen_net.append(Conv2D(filters, (9, 9), padding='same', name=layer_name+'_conv0', activation='relu'))    
+        layer_name = 'G_Head' # 0~2
+        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv0', activation='relu'))
+        self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
         self.gen_net.append(LeakyReLU(name=layer_name+'_act0'))
 
-        layer_name = 'G_Body_0' # 2~7
-        self.__add_conv_gen(layer_name, filters)   
-
-        layer_name = "G_Up_1" # 8
-        self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
-        
-        layer_name = 'G_Body_1' # 9~15
+        layer_name = 'G_Body_0' # 3~8
         self.__add_conv_gen(layer_name, filters)
-        self.gen_net.append(Conv2D(filters, (3, 3), padding='same', name=layer_name+'_conv_add'))
 
-        layer_name = "G_Tail"
+        layer_name = 'G_Body_1' # 9~14
+        self.__add_conv_gen(layer_name, filters)
+
+        layer_name = "G_Up_1" # 15
+        self.gen_net.append(UpSampling2D(size=(2,2), name=layer_name+'_upsamp'))
+
+        layer_name = 'G_Body_3' # 16~21
+        self.__add_conv_gen(layer_name, filters)
+
+        layer_name = "G_Tail" # 22~23
         self.gen_net.append(BatchNormalization(momentum=0.8, name=layer_name+'_norm0'))
         self.gen_net.append(Conv2D(filters=3, kernel_size=(3, 3), padding='same', name='outRGB', activation="sigmoid"))
-        
+
         # build network
         # head
-        operator = self.gen_net[0]
-        layers.append(operator(layers[0]))
-
-        operator = self.gen_net[1]
-        layers.append(operator(layers[1]))
-        head_out = layers[-1] 
-
-        # body first up
         num = len(layers)
-        for i, operator in enumerate(self.gen_net[2:8]):
+        for i, operator in enumerate(self.gen_net[:3]):
+            layers.append(operator(layers[i+num-1]))
+        head_out = layers[-1]
+
+        # body first 0
+        num = len(layers)
+        for i, operator in enumerate(self.gen_net[3:9]):
             layers.append(operator(layers[i+num-1]))
         layers.append(Add()([layers[-1], head_out]))
+        body_0_out = layers[-1]
+
+        # body first 1
+        num = len(layers)
+        for i, operator in enumerate(self.gen_net[9:15]):
+            layers.append(operator(layers[i+num-1]))
+        layers.append(Add()([layers[-1], body_0_out]))
+        body_1_out = layers[-1]
+
+        layers.append(Add()([head_out, body_1_out]))
 
         # up
-        layers.append(self.gen_net[8](layers[-1]))
+        layers.append(self.gen_net[15](layers[-1]))
 
         # tail
         prior_tail = layers[-1]
         num = len(layers)
-        for i, operator in enumerate(self.gen_net[9:16]):
+        for i, operator in enumerate(self.gen_net[16:22]):
             layers.append(operator(layers[i+num-1]))
-        
-        tail_0_out = layers[-1]
-        layers.append(Add()(([prior_tail, tail_0_out])))
+        layers.append(Add()([layers[-1], prior_tail]))
 
         layers.append(self.gen_net[-2](layers[-1])) # batch_norm
         layers.append(self.gen_net[-1](layers[-1])) # rgb
@@ -102,29 +111,42 @@ class SRGAN():
         self.shared_generator = Network(input=layers[0], output=layers[-1], name='generator')
         return Model(layers[0], layers[-1])
 
-    def build_discriminator(self, filters=32):
+    def build_discriminator(self, filters=8):
         input_layer = Input(shape=self.tgt_shape)
         layers = [input_layer]
-        
-        # Down 0
-        layer_name = 'DD0' #0~6
-        self.__add_conv_disc(layer_name, filters)
-        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))        
 
-        # # Down 1
-        # layer_name = 'DD1' #7~13
-        # self.__add_conv_disc(layer_name, filters)   
-        # self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
+        # Down 0
+        layer_name = 'DD0' #0~7
+        self.__add_conv_disc(layer_name, filters)
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
+        filters *= 2
+
+        # Down 1
+        layer_name = 'DD1' #8~13
+        self.__add_conv_disc(layer_name, filters)
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
+        filters *= 2
+
+        # Down 2
+        layer_name = 'DD2' #8~13
+        self.__add_conv_disc(layer_name, filters)
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
+        filters *= 2
+
+        # Down 3
+        layer_name = 'DD3' #8~13
+        self.__add_conv_disc(layer_name, filters)
+        self.dis_net.append(MaxPooling2D(name=layer_name+'_pool'))
 
         self.dis_net.append(Dropout(0.25))
         self.dis_net.append(BatchNormalization(momentum=0.8))
         self.dis_net.append(Flatten())
-        self.dis_net.append(Dense(256, activation='sigmoid'))
+        self.dis_net.append(Dense(1024))
         self.dis_net.append(BatchNormalization(momentum=0.8))
-        self.dis_net.append(Dense(32, activation='sigmoid'))
-        self.dis_net.append(BatchNormalization(momentum=0.8))
+        self.dis_net.append(LeakyReLU())
         self.dis_net.append(Dense(1, activation='sigmoid'))
-        
+
+        # body first up
         for i, operator in enumerate(self.dis_net):
             layers.append(operator(layers[i]))
 
@@ -132,7 +154,7 @@ class SRGAN():
         model = Model(layers[0], layers[-1])
         return model
 
-    def build_vgg(self, vgg_path, loss_layer=8):
+    def build_vgg(self, vgg_path, loss_layer=12):
         vgg = load_model(self.vgg_path)
         self.shared_vgg = Network(inputs=vgg.input, outputs=vgg.get_layer(vgg.layers[loss_layer].name).output, name='vgg')
         input_layer = Input(shape=self.tgt_shape)
@@ -200,7 +222,7 @@ class SRGAN():
         # -----------------
         hr_map = self.vgg.predict(imgs_high)
         vgg_loss = self.vgg_combined.test_on_batch(imgs_low, hr_map)
-        
+
         print(f'd_loss_real:{d_loss_real}, d_loss_fake:{d_loss_fake}, vgg_loss:{vgg_loss}')
 
 

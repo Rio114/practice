@@ -23,6 +23,9 @@ RUN apt-get update -y && \
 RUN rm -rf /var/lib/apt/lists/*
 RUN pip install opencv-python
 
+# pip misc
+RUN pip install responder
+
 EXPOSE 8888
 
 CMD ["bash"]
