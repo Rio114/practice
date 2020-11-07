@@ -1,6 +1,7 @@
-from heapq import heappop, heappush, heapify
+from heapq import heappop, heapify
 
 INF = 1e+10
+
 
 class UnionFind():
     def __init__(self, n):
@@ -30,36 +31,40 @@ class UnionFind():
     def same(self, x, y):
         return self.find(x) == self.find(y)
 
+
 def read_data():
     N, M = map(int, input().split())
     edges = []
     for m in range(M):
         s, t, w = map(int, input().split())
         edges.append([w, s, t])
-    
+
     return N, M, edges
+
 
 def kruskal(N, edges):
     total_cost = 0
-    heapify(edges) # edges[(w, s, t)]
+    heapify(edges)  # edges[(w, s, t)]
     uf = UnionFind(N)
 
     while True:
         try:
             w, s, t = heappop(edges)
-        except:
+        except ValueError:
             break
 
-        if uf.same(s, t) == False:
+        if uf.same(s, t) is False:
             total_cost += w
-            uf.union(s, t) 
+            uf.union(s, t)
 
     return total_cost
+
 
 def main():
     N, M, edges = read_data()
     total_cost = kruskal(N, edges)
     print(total_cost)
-    
+
+
 if __name__ == "__main__":
     main()

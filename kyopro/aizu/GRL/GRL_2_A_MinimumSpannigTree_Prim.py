@@ -2,25 +2,30 @@ from heapq import heappop, heappush
 
 INF = 1e+10
 
+
 def read_data():
     N, M = map(int, input().split())
     edges = []
     for m in range(M):
         s, t, w = map(int, input().split())
         edges.append([s, t, w])
-    
+
     return N, M, edges
+
 
 def gen_w_adj_list(edges, N):
     adj_list = []
     for i in range(N):
         adj_list.append([])
-    
+
     for edge in edges:
-        adj_list[edge[0]].append([edge[1], edge[2]]) # edge : [target, distance]
-        adj_list[edge[1]].append([edge[0], edge[2]]) # edge : [target, distance]
-        
+        # edge : [target, distance]
+        adj_list[edge[0]].append([edge[1], edge[2]])
+        # edge : [target, distance]
+        adj_list[edge[1]].append([edge[0], edge[2]])
+
     return adj_list
+
 
 def prim(N, start, adj_list):
 
@@ -40,7 +45,7 @@ def prim(N, start, adj_list):
     while True:
         try:
             u = heappop(pq)
-        except:
+        except ValueError:
             break
 
         states[u[1]] = 1
@@ -54,6 +59,7 @@ def prim(N, start, adj_list):
 
     return dists
 
+
 def main():
     N, M, edges = read_data()
     adj_list = gen_w_adj_list(edges, N)
@@ -64,6 +70,7 @@ def main():
     for i in dists:
         dist_sum += int(i)
     print(dist_sum)
-    
+
+
 if __name__ == "__main__":
     main()

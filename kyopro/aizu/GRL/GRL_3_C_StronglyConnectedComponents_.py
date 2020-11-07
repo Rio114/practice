@@ -1,6 +1,7 @@
 import sys
 sys.setrecursionlimit(1000000)
 
+
 class scc():
     def __init__(self):
         self.__read_data()
@@ -42,14 +43,14 @@ class scc():
         self.status = [-1] * self.V
         self.parents = [-1] * self.V
         for i in range(self.V):
-            if self.status[i] != 1: 
+            if self.status[i] != 1:
                 self.__dfs(i)
 
         self.status = [-1] * self.V
         self.parents = [None for i in range(self.V)]
 
         for i in reversed(self.order):
-            if self.parents[i] == None:
+            if self.parents[i] is None:
                 self.__rev_dfs(i, i)
 
     def find_scc(self):
@@ -58,11 +59,13 @@ class scc():
             u = self.parents[q[1]]
             # print(v, u)
             print(1 if v == u else 0)
-            
+
+
 def main():
     obj = scc()
     obj.exec()
     obj.find_scc()
+
 
 if __name__ == "__main__":
     main()

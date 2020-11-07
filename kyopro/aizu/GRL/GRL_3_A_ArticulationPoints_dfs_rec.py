@@ -1,7 +1,6 @@
 import sys
 sys.setrecursionlimit(1000000)
 
-import heapq
 
 def read_data():
     V, E = list(map(int, input().split()))
@@ -9,13 +8,14 @@ def read_data():
 
     return V, E, Edges
 
+
 def gen_adj_list(edges, V):
     adj_list = [[] for _ in range(V)]
 
     for edge in edges:
         adj_list[edge[0]].append(edge[1])
         adj_list[edge[1]].append(edge[0])
-        
+
     return adj_list
 
 
@@ -43,9 +43,11 @@ class ArticulationPoints():
                 self.parents[next_v] = current
 
                 self.__dfs(next_v, current)
-                self.lowest[current] = min(self.lowest[current], self.lowest[next_v])
+                self.lowest[current] = min(
+                    self.lowest[current], self.lowest[next_v])
             elif next_v != prev:
-                self.lowest[current] = min(self.lowest[current], self.prenum[next_v])
+                self.lowest[current] = min(
+                    self.lowest[current], self.prenum[next_v])
 
     def show(self):
         print("prenum: ", self.prenum)
@@ -72,12 +74,14 @@ class ArticulationPoints():
         for out in ap:
             print(out)
 
+
 def main():
     V, E, Edges = read_data()
     adj_list = gen_adj_list(Edges, V)
     AP = ArticulationPoints(adj_list, V)
     AP.find_ap()
     # AP.show()
-    
+
+
 if __name__ == "__main__":
     main()

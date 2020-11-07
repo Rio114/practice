@@ -1,10 +1,12 @@
 from heapq import heappush, heappop
 
+
 def read_data():
     V, E, r = list(map(int, input().split()))
     Edge = [list(map(int, input().split())) for _ in range(0, E)]
 
     return V, E, r, Edge
+
 
 def solve(V, Edge, r):
     if V <= 1:
@@ -17,19 +19,19 @@ def solve(V, Edge, r):
         if t != r:
             w, s = heappop(q[t])
             M[t] = (w, s)
-    
+
     used = [False for _ in range(0, V)]
     hist = []
     cycle = []
     for t in range(0, V):
         w, s = M[t]
-        if s == -1 or used[t] == True:
+        if s == -1 or used[t]:
             continue
-        if used[t] == False:
+        if used[t] is False:
             used[t] = True
             hist += [t]
             tt = s
-            while used[tt] == False:
+            while not used[tt]:
                 used[tt] = True
                 hist += [tt]
                 w, s = M[tt]
@@ -37,16 +39,16 @@ def solve(V, Edge, r):
                     hist = []
                     break
                 tt = s
-            if used[tt] == True and s != -1 and 0 < len(hist):
+            if used[tt] and s != -1 and 0 < len(hist):
                 try:
                     k = hist.index(tt)
                     cycle = hist[k:]
-                except:
+                except ValueError:
                     continue
                 finally:
                     pass
                 break
-                
+
     if len(cycle) == 0:
         return sum(m[0] for m in M)
 
@@ -61,7 +63,7 @@ def solve(V, Edge, r):
         else:
             rn[t] = k
             k += 1
-            
+
     Vp = V - len(cycle) + 1
     Ep = []
     for s, t, w in Edge:
@@ -79,10 +81,10 @@ def solve(V, Edge, r):
     return solve(Vp, Ep, r) + sum(M[t][0] for t in cycle)
 
 
-
 def main():
     V, E, r, Edge = read_data()
     print(solve(V, Edge, r))
-    
+
+
 if __name__ == "__main__":
     main()
