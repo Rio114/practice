@@ -4,10 +4,10 @@ import queue
 class topological():
     def __init__(self):
         self.__read_data()
-        self.reachables = [[None] * self.V for _ in range(self.V)]
         self.status = [-1 for _ in range(self.V)]
         self.indeg = [0 for _ in range(self.V)]
         self.__assign_indeg()
+        self.__assign_adj_list()
         self.out = []
 
     def __read_data(self):
@@ -16,8 +16,12 @@ class topological():
 
     def __assign_indeg(self):
         for node in self.Nodes:
-            for t in node:
-                self.indeg[t] += 1
+            self.indeg[node[1]] += 1
+
+    def __assign_adj_list(self):
+        self.adj_list = [[] for _ in range(self.V)]
+        for node in self.Nodes:
+            self.adj_list[node[0]].append(node[1])
 
     def __bfs(self, s):
         q = queue.Queue()
@@ -26,8 +30,8 @@ class topological():
         while not q.empty():
             u = q.get()
             self.out.append(u)
-            for v in self.Nodes[u]:
-                self.indeg[v] += 1
+            for v in self.adj_list[u]:
+                self.indeg[v] -= 1
                 if self.indeg[v] == 0 and self.status[v] != 1:
                     self.status[v] = 1
                     q.put(v)
@@ -41,7 +45,8 @@ class topological():
         self.__sort()
 
     def show(self):
-        print(self.out)
+        for i in self.out:
+            print(i)
 
 
 def main():
