@@ -9,6 +9,10 @@ python = "^3.8"
 fbprophet = "^0.7.1"
 jupyterlab = "^3.0.7"
 plotly = "^4.14.3"
+oanda-bot = "^0.1.2"
+ipywidgets = "^7.6.3"
+jupyter = "^1.0.0"
+jupyterlab-widgets = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 
