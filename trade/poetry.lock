@@ -792,6 +792,14 @@ requests = "*"
 slack-webhook = "*"
 
 [[package]]
+name = "oandapyv20"
+version = "0.6.3"
+description = "Python wrapper for the OANDA REST-V20 API"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "packaging"
 version = "20.9"
 description = "Core utilities for Python packages"
@@ -1206,7 +1214,7 @@ notebook = ">=4.4.1"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "f2207bed1d2b6ce9adf4020bbc9a36fbaca25930e4170cd7ae89316d81f78592"
+content-hash = "f826c16cc3d478792dabc7e55acf76803003fb4cd8f7173a02c8d94468a50007"
 
 [metadata.files]
 anyio = [
@@ -1667,6 +1675,9 @@ numpy = [
 oanda-bot = [
     {file = "oanda-bot-0.1.2.tar.gz", hash = "sha256:fd33ceec081e282691bfb9a09c3ec41a3487095b6c715bd34e6e4026d5f4d188"},
     {file = "oanda_bot-0.1.2-py3-none-any.whl", hash = "sha256:10969f405b4896741a70f1a3708cf2f8b6b29b0221516a4789b31b4993c2318e"},
+]
+oandapyv20 = [
+    {file = "oandapyV20-0.6.3.tar.gz", hash = "sha256:173a56b41ab3a19315c2fbea6f9aa3f0c17f64ba84acff014d072c64c1844b28"},
 ]
 packaging = [
     {file = "packaging-20.9-py2.py3-none-any.whl", hash = "sha256:67714da7f7bc052e064859c05c595155bd1ee9f69f76557e21f051443c20947a"},
