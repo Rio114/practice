@@ -15,6 +15,7 @@ jupyter = "^1.0.0"
 jupyterlab-widgets = "^1.0.0"
 oandapyV20 = "^0.6.3"
 tensorflow = "^2.4.1"
+sklearn = "^0.0"
 
 [tool.poetry.dev-dependencies]
 
