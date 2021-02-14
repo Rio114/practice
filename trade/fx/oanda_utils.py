@@ -36,3 +36,17 @@ def get_candles_df(count, granularity, instrument):
     df["V"] = df["V"].astype("int")
     df["flg"] = df["flg"].astype("bool")
     return df
+
+
+def load_assign_dtype(filename):
+
+    df = pd.read_csv(filename)
+
+    df = df[["time", "flg", "O", "H", "L", "C", "V"]]
+
+    df["time"] = pd.to_datetime(df["time"])
+    df[["O", "H", "L", "C"]] = df[["O", "H", "L", "C"]].astype("float")
+    df["V"] = df["V"].astype("int")
+    df["flg"] = df["flg"].astype("bool")
+
+    return df
