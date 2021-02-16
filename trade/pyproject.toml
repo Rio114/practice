@@ -17,6 +17,7 @@ oandapyV20 = "^0.6.3"
 tensorflow = "^2.4.1"
 sklearn = "^0.0"
 scipy = "^1.6.0"
+optuna = "^2.5.0"
 
 [tool.poetry.dev-dependencies]
 
