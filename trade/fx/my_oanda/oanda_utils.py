@@ -4,7 +4,7 @@ import pandas as pd
 from oandapyV20 import API
 import oandapyV20.endpoints.instruments as instruments
 
-accountID = os.environ["oanda_account_id"]
+# accountID = os.environ["oanda_account_id"]
 access_token = os.environ["oanda_access_token"]
 api = API(access_token=access_token, environment="live")
 

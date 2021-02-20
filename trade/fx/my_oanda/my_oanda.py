@@ -33,6 +33,7 @@ class Bot(object):
         slack_webhook_url: str = "",
         discord_webhook_url: str = "",
         line_notify_token: str = "",
+        folder: str = "data/",
     ) -> None:
         self.BUY = 1
         self.SELL = -1
@@ -44,6 +45,7 @@ class Bot(object):
             "Content-Type": "application/json",
             "Authorization": "Bearer {}".format(access_token),
         }
+        self.folder = folder
         if environment == "practice":
             self.base_url = "https://api-fxpractice.oanda.com"
         else:
@@ -381,7 +383,7 @@ class Bot(object):
         filename: str = "",
         show: bool = False,
     ) -> pd.DataFrame:
-        csv = "{}-{}-{}-{}.csv".format(
+        csv = self.folder + "{}-{}-{}-{}.csv".format(
             self.instrument, self.granularity, from_date, to_date
         )
         if os.path.exists(csv):
@@ -575,7 +577,7 @@ class Bot(object):
             if filename == "":
                 plt.show()
             else:
-                plt.savefig(filename)
+                plt.savefig(self.folder + filename)
 
         return s
 
