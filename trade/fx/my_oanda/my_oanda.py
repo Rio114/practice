@@ -46,6 +46,7 @@ class Bot(object):
             "Authorization": "Bearer {}".format(access_token),
         }
         self.folder = folder
+        self.params = {}
         if environment == "practice":
             self.base_url = "https://api-fxpractice.oanda.com"
         else:
@@ -553,6 +554,7 @@ class Bot(object):
         s.loc["average return"] = round(self.return_rate.mean(), 3)
         s.loc["stop loss"] = stop_loss
         s.loc["take profit"] = take_profit
+        s.loc["params"] = self.params
 
         if show:
             print(s)

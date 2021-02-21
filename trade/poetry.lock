@@ -50,6 +50,32 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "apscheduler"
+version = "3.7.0"
+description = "In-process task scheduler with Cron-like capabilities"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
+
+[package.dependencies]
+pytz = "*"
+six = ">=1.4.0"
+tzlocal = ">=2.0,<3.0"
+
+[package.extras]
+asyncio = ["trollius"]
+doc = ["sphinx", "sphinx-rtd-theme"]
+gevent = ["gevent"]
+mongodb = ["pymongo (>=3.0)"]
+redis = ["redis (>=3.0)"]
+rethinkdb = ["rethinkdb (>=2.4.0)"]
+sqlalchemy = ["sqlalchemy (>=0.8)"]
+testing = ["pytest (<6)", "pytest-cov", "pytest-tornado5", "mock", "pytest-asyncio (<0.6)", "pytest-asyncio"]
+tornado = ["tornado (>=4.3)"]
+twisted = ["twisted"]
+zookeeper = ["kazoo"]
+
+[[package]]
 name = "argon2-cffi"
 version = "20.1.0"
 description = "The secure Argon2 password hashing algorithm."
@@ -297,6 +323,17 @@ description = "XML bomb protection for Python stdlib modules"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "discordwebhook"
+version = "1.0.1"
+description = "discordwebhlok is a python library         for discord webhook with discord rest api on Python 3.6 and above."
+category = "main"
+optional = false
+python-versions = ">=3.6.0"
+
+[package.dependencies]
+requests = "*"
 
 [[package]]
 name = "entrypoints"
@@ -778,6 +815,17 @@ description = "Korean Lunar Calendar"
 category = "main"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "linenotipy"
+version = "1.0.3"
+description = "linenotipy is a python client library         for line notify api on Python 3.6 and above."
+category = "main"
+optional = false
+python-versions = ">=3.6.0"
+
+[package.dependencies]
+requests = "*"
 
 [[package]]
 name = "lunarcalendar"
@@ -1505,6 +1553,14 @@ python-versions = "*"
 scikit-learn = "*"
 
 [[package]]
+name = "slack-webhook"
+version = "1.0.5"
+description = "slack-webhook is a python client library for slack api         Incoming Webhooks on Python 3.6 and above."
+category = "main"
+optional = false
+python-versions = ">=3.6.0"
+
+[[package]]
 name = "sniffio"
 version = "1.2.0"
 description = "Sniff out which async library your code is running under"
@@ -1690,6 +1746,17 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "tzlocal"
+version = "2.1"
+description = "tzinfo object for the local timezone"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+pytz = "*"
+
+[[package]]
 name = "urllib3"
 version = "1.26.3"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -1752,7 +1819,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "e117be7304074cd5db33eb48abd35429c31eb56f013e4653c688b5f22b4ddf8b"
+content-hash = "430101233e92bb867336d2eefcd25caec7859260b7025ade959006d23cea918d"
 
 [metadata.files]
 absl-py = [
@@ -1769,6 +1836,10 @@ anyio = [
 appnope = [
     {file = "appnope-0.1.2-py2.py3-none-any.whl", hash = "sha256:93aa393e9d6c54c5cd570ccadd8edad61ea0c4b9ea7a01409020c9aa019eb442"},
     {file = "appnope-0.1.2.tar.gz", hash = "sha256:dd83cd4b5b460958838f6eb3000c660b1f9caf2a5b1de4264e941512f603258a"},
+]
+apscheduler = [
+    {file = "APScheduler-3.7.0-py2.py3-none-any.whl", hash = "sha256:c06cc796d5bb9eb3c4f77727f6223476eb67749e7eea074d1587550702a7fbe3"},
+    {file = "APScheduler-3.7.0.tar.gz", hash = "sha256:1cab7f2521e107d07127b042155b632b7a1cd5e02c34be5a28ff62f77c900c6a"},
 ]
 argon2-cffi = [
     {file = "argon2-cffi-20.1.0.tar.gz", hash = "sha256:d8029b2d3e4b4cea770e9e5a0104dd8fa185c1724a0f01528ae4826a6d25f97d"},
@@ -1941,6 +2012,10 @@ decorator = [
 defusedxml = [
     {file = "defusedxml-0.6.0-py2.py3-none-any.whl", hash = "sha256:6687150770438374ab581bb7a1b327a847dd9c5749e396102de3fad4e8a3ef93"},
     {file = "defusedxml-0.6.0.tar.gz", hash = "sha256:f684034d135af4c6cbb949b8a4d2ed61634515257a67299e5f940fbaa34377f5"},
+]
+discordwebhook = [
+    {file = "discordwebhook-1.0.1-py3-none-any.whl", hash = "sha256:15c23e242c3db15da639bdaa87d0949f02ddfb90ddb10bc123e16be19574881f"},
+    {file = "discordwebhook-1.0.1.tar.gz", hash = "sha256:fcf032d82a98dee2cc737fab1e0ee1f77ff1a18251d94688ea15945fe1aa8e09"},
 ]
 entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},
@@ -2198,6 +2273,10 @@ kiwisolver = [
 korean-lunar-calendar = [
     {file = "korean_lunar_calendar-0.2.1-py3-none-any.whl", hash = "sha256:a619ea88610129019267467b85cc9faf0fab6e1694b2e782d1aeb610cdd382d5"},
     {file = "korean_lunar_calendar-0.2.1.tar.gz", hash = "sha256:12ce54b1392ed45a82dc6cea85ee5f7e33630556e82488f57e37a22482c8275d"},
+]
+linenotipy = [
+    {file = "linenotipy-1.0.3-py3-none-any.whl", hash = "sha256:328db206e8f795d7497cf243a6cdf5d1c9192e339fb63716608937541e8a4cf5"},
+    {file = "linenotipy-1.0.3.tar.gz", hash = "sha256:63d448261cdc22737b0d07d6a115efc7afc102ee9e1164f29c91935171ca9249"},
 ]
 lunarcalendar = [
     {file = "LunarCalendar-0.0.9-py2.py3-none-any.whl", hash = "sha256:5ef25883d73898b37edb54da9e0f04215aaa68b897fd12e9d4b79756ff91c8cb"},
@@ -2754,6 +2833,10 @@ six = [
 sklearn = [
     {file = "sklearn-0.0.tar.gz", hash = "sha256:e23001573aa194b834122d2b9562459bf5ae494a2d59ca6b8aa22c85a44c0e31"},
 ]
+slack-webhook = [
+    {file = "slack-webhook-1.0.5.tar.gz", hash = "sha256:570df38e39a385ab37e1a3b368c20d6a51eacbb77ccf09ac88163efc542608bf"},
+    {file = "slack_webhook-1.0.5-py3-none-any.whl", hash = "sha256:63e69d1f30424ebfbae82eb6903b5dbf393ac6efc2e1177b5ea41414b575a523"},
+]
 sniffio = [
     {file = "sniffio-1.2.0-py3-none-any.whl", hash = "sha256:471b71698eac1c2112a40ce2752bb2f4a4814c22a54a3eed3676bc0f5ca9f663"},
     {file = "sniffio-1.2.0.tar.gz", hash = "sha256:c4666eecec1d3f50960c6bdf61ab7bc350648da6c126e3cf6898d8cd4ddcd3de"},
@@ -2892,6 +2975,10 @@ typing-extensions = [
     {file = "typing_extensions-3.7.4.3-py2-none-any.whl", hash = "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"},
     {file = "typing_extensions-3.7.4.3-py3-none-any.whl", hash = "sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918"},
     {file = "typing_extensions-3.7.4.3.tar.gz", hash = "sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c"},
+]
+tzlocal = [
+    {file = "tzlocal-2.1-py2.py3-none-any.whl", hash = "sha256:e2cb6c6b5b604af38597403e9852872d7f534962ae2954c7f35efcb1ccacf4a4"},
+    {file = "tzlocal-2.1.tar.gz", hash = "sha256:643c97c5294aedc737780a49d9df30889321cbe1204eac2c2ec6134035a92e44"},
 ]
 urllib3 = [
     {file = "urllib3-1.26.3-py2.py3-none-any.whl", hash = "sha256:1b465e494e3e0d8939b50680403e3aedaa2bc434b7d5af64dfd3c958d7f5ae80"},
