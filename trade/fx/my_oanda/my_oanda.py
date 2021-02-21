@@ -554,7 +554,7 @@ class Bot(object):
         s.loc["average return"] = round(self.return_rate.mean(), 3)
         s.loc["stop loss"] = stop_loss
         s.loc["take profit"] = take_profit
-        s.loc["params"] = self.params
+        # s.loc["params"] = self.params
 
         if show:
             print(s)
