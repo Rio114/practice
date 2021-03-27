@@ -18,6 +18,7 @@ pykalman = "^0.9.5"
 pystan = "^2.19.1"
 prophet = "^1.0"
 plotly = "^4.14.3"
+lightgbm = "^3.2.0"
 
 [tool.poetry.dev-dependencies]
 
