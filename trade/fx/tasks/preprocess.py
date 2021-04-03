@@ -13,10 +13,10 @@ class PreprocessCandles(luigi.Task):
         return [GetCandles()]
 
     def output(self):
-        return luigi.LocalTarget("fx/data/lu_df_head.csv")
+        return luigi.LocalTarget("fx/data/usd_jpy_m1_head.csv")
 
     def run(self):
         # preprocess
         # split train/valid/test
-        df = pd.read_csv("fx/data/lu_df.csv")
-        df.head().to_csv("fx/data/lu_df_head.csv", index=True)
+        df = pd.read_csv("fx/data/usd_jpy_m1.csv")
+        df.head().to_csv("fx/data/usd_jpy_m1_head.csv", index=True)

@@ -1,10 +1,5 @@
-import os
-
 import luigi
-import pandas as pd
-
-from oandapyV20 import API
-import oandapyV20.endpoints.instruments as instruments
+from utils.oanda_utils import get_candles_df
 
 
 class GetCandles(luigi.Task):
@@ -16,35 +11,13 @@ class GetCandles(luigi.Task):
         pass
 
     def output(self):
-        return luigi.LocalTarget("fx/data/lu_df.csv")
+        return luigi.LocalTarget("fx/data/usd_jpy_m1.csv")
 
     def run(self):
+        count = 5000
+        granularity = "M1"
+        instrument = "USD_JPY"
 
-        access_token = os.environ["oanda_access_token"]
-
-        api = API(access_token=access_token, environment="live")
-
-        params = {"count": 1000, "granularity": "M1"}
-        r = instruments.InstrumentsCandles(instrument="USD_JPY", params=params)
-        data = api.request(r)
-
-        prices = []
-        for c in data["candles"]:
-            prices.append(
-                [
-                    c["time"],
-                    c["mid"]["o"],
-                    c["mid"]["h"],
-                    c["mid"]["l"],
-                    c["mid"]["c"],
-                    c["volume"],
-                ]
-            )
-
-        df = pd.DataFrame(
-            prices, columns=["time", "open", "high", "low", "close", "volume"]
-        )
-        df["time"] = pd.to_datetime(df["time"])
-        df = df.set_index("time")
+        df = get_candles_df(count, granularity, instrument)
 
         df.to_csv("fx/data/lu_df.csv", index=True)

@@ -9,6 +9,14 @@ access_token = os.environ["oanda_access_token"]
 api = API(access_token=access_token, environment="live")
 
 
+def assign_dtype(df):
+    df["time"] = pd.to_datetime(df["time"])
+    df[["O", "H", "L", "C"]] = df[["O", "H", "L", "C"]].astype("float")
+    df["V"] = df["V"].astype("int")
+    df["flg"] = df["flg"].astype("bool")
+    return df
+
+
 def get_candles_df(count, granularity, instrument):
     params = {"count": count, "granularity": granularity}
     r = instruments.InstrumentsCandles(instrument=instrument, params=params)
@@ -31,22 +39,12 @@ def get_candles_df(count, granularity, instrument):
 
     cols = ["time", "flg", "O", "H", "L", "C", "V"]
     df = pd.DataFrame(records, columns=cols)
-    df["time"] = pd.to_datetime(df["time"])
-    df[["O", "H", "L", "C"]] = df[["O", "H", "L", "C"]].astype("float")
-    df["V"] = df["V"].astype("int")
-    df["flg"] = df["flg"].astype("bool")
+    df = assign_dtype(df)
     return df
 
 
 def load_assign_dtype(filename):
-
     df = pd.read_csv(filename)
-
     df = df[["time", "flg", "O", "H", "L", "C", "V"]]
-
-    df["time"] = pd.to_datetime(df["time"])
-    df[["O", "H", "L", "C"]] = df[["O", "H", "L", "C"]].astype("float")
-    df["V"] = df["V"].astype("int")
-    df["flg"] = df["flg"].astype("bool")
-
+    df = assign_dtype(df)
     return df
