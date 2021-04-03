@@ -336,6 +336,14 @@ python-versions = ">=3.6.0"
 requests = "*"
 
 [[package]]
+name = "docutils"
+version = "0.16"
+description = "Docutils -- Python Documentation Utilities"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
 name = "entrypoints"
 version = "0.3"
 description = "Discover and load entry points from installed packages."
@@ -826,6 +834,31 @@ python-versions = ">=3.6.0"
 
 [package.dependencies]
 requests = "*"
+
+[[package]]
+name = "lockfile"
+version = "0.12.2"
+description = "Platform-independent file locking module"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "luigi"
+version = "3.0.2"
+description = "Workflow mgmgt + task scheduling + dependency resolution."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+python-daemon = "*"
+python-dateutil = ">=2.7.5,<3"
+tornado = ">=5.0,<7"
+
+[package.extras]
+prometheus = ["prometheus-client (==0.5.0)"]
+toml = ["toml (<2.0.0)"]
 
 [[package]]
 name = "lunarcalendar"
@@ -1339,6 +1372,21 @@ Cython = ">=0.22,<0.25.1 || >0.25.1"
 numpy = ">=1.7"
 
 [[package]]
+name = "python-daemon"
+version = "2.3.0"
+description = "Library to implement a well-behaved Unix daemon process."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+docutils = "*"
+lockfile = ">=0.10"
+
+[package.extras]
+test = ["coverage", "docutils", "testscenarios (>=0.4)", "testtools"]
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.1"
 description = "Extensions to the standard Python datetime module"
@@ -1819,7 +1867,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "430101233e92bb867336d2eefcd25caec7859260b7025ade959006d23cea918d"
+content-hash = "93eddac1fa10835acd37d601b0ce7aac841b4dd2a884c0b0bf8daa7b294a1bd6"
 
 [metadata.files]
 absl-py = [
@@ -2016,6 +2064,10 @@ defusedxml = [
 discordwebhook = [
     {file = "discordwebhook-1.0.1-py3-none-any.whl", hash = "sha256:15c23e242c3db15da639bdaa87d0949f02ddfb90ddb10bc123e16be19574881f"},
     {file = "discordwebhook-1.0.1.tar.gz", hash = "sha256:fcf032d82a98dee2cc737fab1e0ee1f77ff1a18251d94688ea15945fe1aa8e09"},
+]
+docutils = [
+    {file = "docutils-0.16-py2.py3-none-any.whl", hash = "sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af"},
+    {file = "docutils-0.16.tar.gz", hash = "sha256:c2de3a60e9e7d07be26b7f2b00ca0309c207e06c100f9cc2a94931fc75a478fc"},
 ]
 entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},
@@ -2277,6 +2329,13 @@ korean-lunar-calendar = [
 linenotipy = [
     {file = "linenotipy-1.0.3-py3-none-any.whl", hash = "sha256:328db206e8f795d7497cf243a6cdf5d1c9192e339fb63716608937541e8a4cf5"},
     {file = "linenotipy-1.0.3.tar.gz", hash = "sha256:63d448261cdc22737b0d07d6a115efc7afc102ee9e1164f29c91935171ca9249"},
+]
+lockfile = [
+    {file = "lockfile-0.12.2-py2.py3-none-any.whl", hash = "sha256:6c3cb24f344923d30b2785d5ad75182c8ea7ac1b6171b08657258ec7429d50fa"},
+    {file = "lockfile-0.12.2.tar.gz", hash = "sha256:6aed02de03cba24efabcd600b30540140634fc06cfa603822d508d5361e9f799"},
+]
+luigi = [
+    {file = "luigi-3.0.2.tar.gz", hash = "sha256:b4b1ccf086586d041d7e91e68515d495c550f30e4d179d63863fea9ccdbb78eb"},
 ]
 lunarcalendar = [
     {file = "LunarCalendar-0.0.9-py2.py3-none-any.whl", hash = "sha256:5ef25883d73898b37edb54da9e0f04215aaa68b897fd12e9d4b79756ff91c8cb"},
@@ -2645,6 +2704,10 @@ pystan = [
     {file = "pystan-2.19.1.1-cp38-cp38-win32.whl", hash = "sha256:f16c399da3d9d72e9661b131c23d51a59c789416598885714813fcb552234c83"},
     {file = "pystan-2.19.1.1-cp38-cp38-win_amd64.whl", hash = "sha256:9d8c2ae05d1dca854a55b2ae9276af5866e473fb8264d03d5267abadb3c602da"},
     {file = "pystan-2.19.1.1.tar.gz", hash = "sha256:fa8bad8dbc0da22bbe6f36af56c9abbfcf10f92df8ce627d59a36bd8d25eb038"},
+]
+python-daemon = [
+    {file = "python-daemon-2.3.0.tar.gz", hash = "sha256:bda993f1623b1197699716d68d983bb580043cf2b8a66a01274d9b8297b0aeaf"},
+    {file = "python_daemon-2.3.0-py2.py3-none-any.whl", hash = "sha256:191c7b67b8f7aac58849abf54e19fe1957ef7290c914210455673028ad454989"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
