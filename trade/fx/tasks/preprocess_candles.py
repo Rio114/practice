@@ -1,7 +1,7 @@
-import pandas as pd
 import luigi
 
 from tasks.get_candles import GetCandles
+from utils.oanda_utils import load_candles_df
 
 
 class PreprocessCandles(luigi.Task):
@@ -18,5 +18,5 @@ class PreprocessCandles(luigi.Task):
     def run(self):
         # preprocess
         # split train/valid/test
-        df = pd.read_csv("fx/data/usd_jpy_m1.csv")
+        df = load_candles_df("fx/data/usd_jpy_m1.csv")
         df.head().to_csv("fx/data/usd_jpy_m1_head.csv", index=True)

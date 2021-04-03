@@ -1,7 +1,7 @@
 import luigi
 
 from tasks.get_candles import GetCandles  # noqa
-from tasks.preprocess import PreprocessCandles  # noqa
+from tasks.preprocess_candles import PreprocessCandles  # noqa
 
 
 def main():

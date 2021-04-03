@@ -14,10 +14,13 @@ class GetCandles(luigi.Task):
         return luigi.LocalTarget("fx/data/usd_jpy_m1.csv")
 
     def run(self):
-        count = 5000
-        granularity = "M1"
+        params = {
+            # "count": 5000,
+            "granularity": "M1",
+            "from": "2021-3-23",
+            "to": "2021-3-28",
+        }
         instrument = "USD_JPY"
 
-        df = get_candles_df(count, granularity, instrument)
-
-        df.to_csv("fx/data/lu_df.csv", index=True)
+        df = get_candles_df(instrument, params)
+        df.to_csv("fx/data/usd_jpy_m1.csv", index=True)
