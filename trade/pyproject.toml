@@ -23,6 +23,8 @@ linenotipy = "^1.0.3"
 discordwebhook = "^1.0.1"
 luigi = "^3.0.2"
 lxml = "^4.6.3"
+bs4 = "^0.0.1"
+html5lib = "^1.1"
 
 [tool.poetry.dev-dependencies]
 
